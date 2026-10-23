@@ -303,9 +303,9 @@ const SignupPage = ({
                   <img
                     src={scenespectLogoFull}
                     alt="SceneSpect"
-                    className="h-[clamp(1.75rem,3.89cqw,3.5rem)] w-auto object-contain"
+                    className="h-[clamp(2rem,4.5cqw,4rem)] w-auto object-contain"
                   />
-                  <span className="whitespace-nowrap text-[clamp(1.25rem,2.78cqw,2.5rem)] font-semibold text-[#16181D]">
+                  <span className="whitespace-nowrap text-[clamp(1.5rem,3.47cqw,3.125rem)] font-semibold text-[#16181D]">
                     에
                   </span>
                 </div>
