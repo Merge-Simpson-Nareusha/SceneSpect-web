@@ -30,7 +30,7 @@ function Button({ name = 'default', children, onClick, disabled = false }: Butto
   const selected = buttonStyles[name] ?? buttonStyles.default
 
   return (
-    <button type="button" onClick={onClick} disabled={disabled} className={`group flex w-full items-center justify-center rounded-[0.3125rem] text-[clamp(1rem,1.39cqw,1.25rem)] font-medium [&_img]:size-[1em] ${selected.color} py-[0.4rem] transition-colors duration-200 ease-in-out cursor-pointer disabled:cursor-not-allowed`}>
+    <button type="button" onClick={onClick} disabled={disabled} className={`group flex w-full items-center justify-center rounded-[0.3125rem] text-[clamp(1rem,1.39cqw,1.25rem)] font-medium [&_img]:size-[1em] ${selected.color} py-[0.4rem] transition-colors duration-200 ease-in-out cursor-pointer disabled:cursor-not-allowed max-md:min-h-12 max-md:py-3`}>
       {children}
     </button>
   )

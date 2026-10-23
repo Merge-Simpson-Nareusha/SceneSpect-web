@@ -122,23 +122,25 @@ const SignupPage = ({
   }
 
   return (
-    <div className="@container mx-auto flex h-svh w-full max-w-[2560px]">
-      <div className="flex h-svh w-full gap-[2.78cqw] px-[2.78cqw] py-[4.44svh]">
-        <div className="flex w-[45%] shrink-0 items-center justify-center">
+    <div className="@container mx-auto flex h-svh w-full max-w-[2560px] max-md:h-auto max-md:min-h-svh max-md:max-w-none">
+      <div className="flex h-svh w-full gap-[2.78cqw] px-[2.78cqw] py-[4.44svh] max-md:h-auto max-md:min-h-svh max-md:flex-col max-md:gap-0 max-md:px-5 max-md:py-6">
+        <div className="flex w-[45%] shrink-0 items-center justify-center max-md:hidden">
           <img src={authImage} alt="" className="h-full w-full object-contain" />
         </div>
         <div
-          className={`flex min-h-0 min-w-0 flex-1 flex-col ${currentStep === 5 ? 'gap-[clamp(4rem,8cqw,7rem)]' : 'gap-[1.875rem]'} px-[9.72cqw] pb-[8.89svh]`}
+          className={`flex min-h-0 min-w-0 flex-1 flex-col ${currentStep === 5 ? 'gap-[clamp(4rem,8cqw,7rem)]' : 'gap-[1.875rem]'} px-[9.72cqw] pb-[8.89svh] max-md:w-full max-md:gap-10 max-md:px-0 max-md:pb-8`}
         >
         <AuthProgress
           currentStep={currentStep}
           onStepClick={(step) => setCurrentStep((current) => (step < current ? step : current))}
         />
-        <div className="flex min-w-0 flex-1 flex-col gap-[2.5rem]">
+        <div
+          className={`flex min-w-0 flex-1 flex-col gap-[2.5rem] ${currentStep === 5 ? 'max-md:gap-0' : 'max-md:flex-initial max-md:gap-10'}`}
+        >
           {currentStep !== 5 && <SignupStepHeader currentStep={currentStep} />}
           {currentStep === 1 && (
             <>
-              <div className="flex flex-col gap-[1.25rem]">
+              <div className="flex flex-col gap-[1.25rem] max-md:gap-7">
                 <AuthFormField
                   name="email"
                   type="email"
@@ -147,7 +149,7 @@ const SignupPage = ({
                   value={email}
                   onChange={(event) => setEmail(event.currentTarget.value)}
                 />
-                <div className="flex flex-col gap-[0.625rem]">
+                <div className="flex flex-col gap-[0.625rem] max-md:gap-4">
                   <div className="min-h-[1.25em] text-[clamp(0.75rem,1.11cqw,1rem)] leading-tight">
                     <p
                       className={`text-[#ef4444] ${selectedError ? `visible ${selectedError.textSize}` : 'invisible'}`}
@@ -160,7 +162,7 @@ const SignupPage = ({
                   </Button>
                 </div>
                 <FormDivider />
-                <div className="grid grid-cols-2 gap-[clamp(0.5rem,0.69cqw,0.625rem)]">
+                <div className="grid grid-cols-2 gap-[clamp(0.5rem,0.69cqw,0.625rem)] max-md:gap-3">
                   <SocialLoginButton name={'google'} />
                   <SocialLoginButton name={'apple'} />
                   <SocialLoginButton name={'kakao'} />
@@ -172,8 +174,8 @@ const SignupPage = ({
           )}
 
           {currentStep === 2 && (
-            <div className="flex min-h-0 flex-1 flex-col justify-between gap-[clamp(1.5rem,2.78cqw,2.5rem)]">
-              <div className="flex flex-col gap-[clamp(1.5rem,2.78cqw,2.5rem)]">
+            <div className="flex min-h-0 flex-1 flex-col justify-between gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:flex-initial max-md:justify-start max-md:gap-10">
+              <div className="flex flex-col gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:gap-8">
                 <EmailEditField value={email} onChange={setEmail} />
 
                 <div className="flex flex-col gap-[clamp(1rem,1.67cqw,1.5rem)]">
@@ -199,7 +201,7 @@ const SignupPage = ({
                 </div>
               </div>
 
-              <div className="flex flex-col items-center gap-[clamp(1.5rem,3.33cqw,3rem)]">
+              <div className="flex flex-col items-center gap-[clamp(1.5rem,3.33cqw,3rem)] max-md:gap-8">
                 <Button
                   name={canContinue ? 'default' : 'disabled'}
                   disabled={!canContinue}
@@ -217,8 +219,8 @@ const SignupPage = ({
           )}
 
           {currentStep === 3 && (
-            <div className="flex min-h-0 flex-1 flex-col justify-between gap-[clamp(1.5rem,2.78cqw,2.5rem)]">
-              <div className="flex flex-col gap-[clamp(1.5rem,2.78cqw,2.5rem)]">
+            <div className="flex min-h-0 flex-1 flex-col justify-between gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:flex-initial max-md:justify-start max-md:gap-10">
+              <div className="flex flex-col gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:gap-8">
                 <EmailEditField value={email} onChange={setEmail} />
               </div>
               <div>
@@ -232,7 +234,7 @@ const SignupPage = ({
                   onVerificationExpired={handleVerificationResend}
                 />
               </div>
-              <div className="flex flex-col items-center gap-[clamp(1.5rem,3.33cqw,3rem)]">
+              <div className="flex flex-col items-center gap-[clamp(1.5rem,3.33cqw,3rem)] max-md:gap-8">
                 <Button
                   name={verificationCode.length === 6 ? 'default' : 'disabled'}
                   disabled={verificationCode.length !== 6}
@@ -251,8 +253,8 @@ const SignupPage = ({
           )}
 
           {currentStep === 4 && (
-            <div className="flex min-h-0 flex-1 flex-col justify-between gap-[clamp(1.5rem,2.78cqw,2.5rem)]">
-              <div className="flex flex-col gap-[clamp(1rem,2.22cqw,2rem)]">
+            <div className="flex min-h-0 flex-1 flex-col justify-between gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:flex-initial max-md:justify-start max-md:gap-10">
+              <div className="flex flex-col gap-[clamp(1rem,2.22cqw,2rem)] max-md:gap-8">
                 <TermsAgreement
                   variant="all"
                   checked={allAgreementsAccepted}
@@ -272,7 +274,7 @@ const SignupPage = ({
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col items-center gap-[clamp(1.5rem,2.78cqw,2.5rem)]">
+              <div className="flex flex-col items-center gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:gap-8">
                 <Button
                   name={requiredAgreementsAccepted ? 'default' : 'disabled'}
                   disabled={!requiredAgreementsAccepted}
@@ -292,7 +294,7 @@ const SignupPage = ({
           )}
 
           {currentStep === 5 && (
-            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-[clamp(2rem,5cqw,4rem)]">
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-[clamp(2rem,5cqw,4rem)] max-md:flex-1 max-md:justify-center max-md:gap-10 max-md:py-8">
               <img
                 src={completionIcon}
                 alt="가입 완료"

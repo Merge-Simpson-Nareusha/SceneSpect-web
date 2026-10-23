@@ -58,7 +58,7 @@ function SocialLoginButton({ name = 'google' }: ButtonProps) {
 
   return (
     <button
-      className={`group flex w-full items-center justify-center rounded-[0.3125rem] text-[clamp(0.875rem,1.39cqw,1.125rem)] font-semibold [&_img]:size-[1em] ${selected.color} py-[0.625rem] transition-colors duration-200 ease-in-out cursor-pointer`}
+      className={`group flex w-full items-center justify-center rounded-[0.3125rem] text-[clamp(0.875rem,1.39cqw,1.125rem)] font-semibold [&_img]:size-[1em] ${selected.color} py-[0.625rem] transition-colors duration-200 ease-in-out cursor-pointer max-md:min-h-11`}
     >
       {selected.content}
     </button>

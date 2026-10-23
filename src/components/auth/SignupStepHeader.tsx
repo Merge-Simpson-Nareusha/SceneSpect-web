@@ -40,7 +40,7 @@ function SignupStepHeader({ currentStep }: SignupStepHeaderProps) {
   const step = signupSteps[currentStep as keyof typeof signupSteps] ?? signupSteps[1]
   const titleClassName = `font-semibold text-[#16181D] ${
     currentStep >= 2 && currentStep <= 4
-      ? 'w-full whitespace-nowrap text-[clamp(1.5rem,2.92cqw,2.625rem)]'
+      ? 'w-full whitespace-nowrap text-[clamp(1.5rem,2.92cqw,2.625rem)] max-md:whitespace-normal max-md:text-[clamp(1.5rem,6vw,2rem)]'
       : 'whitespace-nowrap text-[clamp(1.5rem,3.47cqw,3.125rem)]'
   } ${
     currentStep === 4 ? 'tracking-[-0.04em]' : ''
@@ -68,13 +68,13 @@ function SignupStepHeader({ currentStep }: SignupStepHeaderProps) {
   }
 
   return (
-    <div className="flex w-full flex-col items-start gap-[clamp(0.5rem,1.39cqw,1.25rem)]">
+    <div className="flex w-full flex-col items-start gap-[clamp(0.5rem,1.39cqw,1.25rem)] max-md:gap-4">
       <img
         src={scenespectLogoSymbol}
         alt="SceneSpect 심볼"
         className="h-[clamp(1.5rem,2.64cqw,2.375rem)] w-auto object-contain"
       />
-      <div className="flex w-full flex-col gap-[0.25rem]">
+      <div className="flex w-full flex-col gap-[0.25rem] max-md:gap-2">
         <div className="flex w-full items-center gap-[clamp(0.25rem,0.56cqw,0.5rem)]">
           {step.layout === 'brand' && (
             <img
