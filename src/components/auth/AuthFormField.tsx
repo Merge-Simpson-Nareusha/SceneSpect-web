@@ -28,6 +28,9 @@ type AuthFormFieldProps = Omit<
   placeholder?: string
   // true이면 제목 오른쪽에 비밀번호 조건 안내를 표시합니다.
   showPasswordRule?: boolean
+  // 제목 오른쪽에 보조 동작 문구를 표시합니다. onLabelActionClick으로 동작을 연결할 수 있습니다.
+  labelActionText?: string
+  onLabelActionClick?: () => void
   // true이면 password 입력창에 표시/숨김 아이콘을 보여줍니다.
   showPasswordToggle?: boolean
   // true이면 일반 입력 옵션 대신 인증 코드 여러 칸 입력 UI를 표시합니다.
@@ -193,6 +196,8 @@ function AuthFormField({
   type = 'text',
   placeholder,
   showPasswordRule = false,
+  labelActionText,
+  onLabelActionClick,
   showPasswordToggle = false,
   isVerificationCode = false,
   isVerificationCodeError = false,
@@ -281,6 +286,15 @@ function AuthFormField({
               특수문자 포함
             </span>
           </div>
+        )}
+        {labelActionText && (
+          <button
+            type="button"
+            onClick={onLabelActionClick}
+            className="shrink-0 cursor-pointer text-[clamp(0.75rem,1.11cqw,1rem)] font-normal text-[#2563EB]"
+          >
+            {labelActionText}
+          </button>
         )}
       </div>
 
