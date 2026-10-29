@@ -9,7 +9,9 @@ export type NavigationHeaderProps = {
   homeHref?: string
   loginHref?: string
   links?: { label: string; href: string }[]
+  activeHref?: string
   accountOpen?: boolean
+  accountControlsId?: string
   onAccountClick?: () => void
 }
 
@@ -26,60 +28,68 @@ export default function NavigationHeader({
   homeHref = '/',
   loginHref = '/login',
   links = defaultLinks,
+  activeHref,
   accountOpen = false,
+  accountControlsId,
   onAccountClick,
 }: NavigationHeaderProps) {
   const focusStyle =
     'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2962ff]'
+  const displayName = userName.trim() || '사용자'
 
   return (
-    <header className="relative flex h-[80px] w-full items-center justify-between bg-white/80 px-[60px] text-[#16181d] backdrop-blur-[20px]">
-      <a href={homeHref} aria-label="SceneSpect 홈" className={`shrink-0 ${focusStyle}`}>
-        <img
-          src={logo}
-          alt="SceneSpect"
-          className="block h-[60px] w-[191px] object-contain"
-        />
-      </a>
-      <nav
-        aria-label="주 메뉴"
-        className="flex shrink-0 items-center gap-[50px] text-[22px] leading-normal tracking-[-1.32px]"
-      >
-        {links.map(({ label, href }) => (
-          <a
-            key={label}
-            href={href}
-            className={`whitespace-nowrap transition-colors hover:text-[#2962ff] ${focusStyle}`}
-          >
-            {label}
-          </a>
-        ))}
-      </nav>
-      <div className="flex w-[200px] shrink-0 justify-end">
-        {auth === 'guest' ? (
-          <a
-            href={loginHref}
-            className={`rounded-[5px] bg-[#f1f5f9] px-[20px] py-[8px] text-[30px] leading-[36px] font-light transition-colors hover:bg-[#e2e8f0] ${focusStyle}`}
-          >
-            로그인
-          </a>
-        ) : (
-          <button
-            type="button"
-            aria-label={`${userName} 계정 메뉴`}
-            aria-expanded={accountOpen}
-            onClick={onAccountClick}
-            className={`flex max-w-[200px] cursor-pointer items-center gap-[10px] rounded-[5px] px-[16px] py-[8px] text-[28px] leading-[33px] font-light transition-colors hover:bg-[#e2e8f0] ${accountOpen ? 'bg-[#e2e8f0]' : 'bg-[#f1f5f9]'} ${focusStyle}`}
-          >
-            <img src={userIcon} alt="" className="size-[23.5px] shrink-0" />
-            <span className="min-w-0 truncate">{userName}</span>
-            <span
-              className={`flex h-[8px] w-[16px] shrink-0 items-center justify-center transition-transform ${accountOpen ? 'rotate-180' : ''}`}
+    <header className="relative z-10 h-[80px] w-full border-b border-[#eef0f3] bg-white/80 text-[#16181d] backdrop-blur-[20px]">
+      <div className="mx-auto grid h-full max-w-[1512px] grid-cols-[minmax(164px,1fr)_auto_minmax(164px,1fr)] items-center gap-x-[24px] px-[clamp(24px,3.97vw,60px)]">
+        <a
+          href={homeHref}
+          aria-label="SceneSpect 홈"
+          className={`flex min-h-[44px] w-fit items-center rounded-[4px] ${focusStyle}`}
+        >
+          <img src={logo} alt="" className="block h-[52px] w-[164px] object-contain" />
+        </a>
+        <nav
+          aria-label="주 메뉴"
+          className="flex items-center gap-[clamp(24px,2.65vw,40px)] text-[18px] leading-[26px] tracking-[-0.36px]"
+        >
+          {links.map(({ label, href }) => (
+            <a
+              key={href}
+              href={href}
+              aria-current={activeHref === href ? 'page' : undefined}
+              className={`flex min-h-[44px] items-center rounded-[4px] whitespace-nowrap transition-colors duration-150 hover:text-[#2962ff] motion-reduce:transition-none ${activeHref === href ? 'text-[#2962ff]' : ''} ${focusStyle}`}
             >
-              <img src={chevron} alt="" className="h-[17.5px] w-[9.3px] rotate-90" />
-            </span>
-          </button>
-        )}
+              {label}
+            </a>
+          ))}
+        </nav>
+        <div className="flex min-w-0 justify-end">
+          {auth === 'guest' ? (
+            <a
+              href={loginHref}
+              className={`flex min-h-[44px] items-center rounded-[5px] bg-[#f1f5f9] px-[16px] py-[8px] text-[18px] leading-[26px] font-normal transition-colors hover:bg-[#e2e8f0] motion-reduce:transition-none ${focusStyle}`}
+            >
+              로그인
+            </a>
+          ) : (
+            <button
+              type="button"
+              aria-label={`${displayName} 계정 메뉴`}
+              title={displayName}
+              aria-expanded={accountControlsId ? accountOpen : undefined}
+              aria-controls={accountControlsId}
+              onClick={onAccountClick}
+              className={`flex min-h-[44px] max-w-[200px] min-w-0 cursor-pointer items-center gap-[8px] rounded-[5px] px-[12px] py-[8px] text-[18px] leading-[26px] font-normal transition-colors hover:bg-[#e2e8f0] motion-reduce:transition-none ${accountOpen ? 'bg-[#e2e8f0]' : 'bg-[#f1f5f9]'} ${focusStyle}`}
+            >
+              <img src={userIcon} alt="" className="size-[20px] shrink-0" />
+              <span className="min-w-0 truncate">{displayName}</span>
+              <span
+                className={`flex h-[8px] w-[14px] shrink-0 items-center justify-center transition-transform motion-reduce:transition-none ${accountOpen ? 'rotate-180' : ''}`}
+              >
+                <img src={chevron} alt="" className="h-[14px] w-[7.43px] rotate-90" />
+              </span>
+            </button>
+          )}
+        </div>
       </div>
     </header>
   )

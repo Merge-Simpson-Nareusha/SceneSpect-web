@@ -1,55 +1,62 @@
 import { useState } from 'react'
 import NavigationHeader from '../components/layout/NavigationHeader'
 
-/** /?preview=header 에서 서버 없이 두 상태를 확인합니다. */
+/** 실제 페이지 상단 배치로 확인하는 데스크톱 전용 미리보기입니다. */
 export default function HeaderPreviewPage() {
   const [accountOpen, setAccountOpen] = useState(false)
+  const [auth, setAuth] = useState<'guest' | 'signedIn'>('signedIn')
   const [userName, setUserName] = useState('이름임')
 
   return (
-    <main className="min-h-svh bg-[#f5f6f8] text-[#16181d]">
-      <div className="mx-auto max-w-[1512px] space-y-[32px] py-[32px]">
-        <div className="px-[24px]">
-          <h1 className="text-[24px] font-semibold">공통 헤더 미리보기</h1>
-          <p className="mt-[8px] text-[16px] text-slate-600">
-            Figma 04_Component · Navigation/Header
-          </p>
-        </div>
-        <section aria-labelledby="guest-title">
-          <h2 id="guest-title" className="mb-[12px] px-[24px] text-[16px]">
-            로그인 전 · Guest
-          </h2>
-          <NavigationHeader loginHref="#login-preview" />
-        </section>
-        <section aria-labelledby="signed-in-title">
-          <h2 id="signed-in-title" className="mb-[12px] px-[24px] text-[16px]">
-            로그인 후 · SignedIn
-          </h2>
-          <NavigationHeader
-            auth="signedIn"
-            userName={userName}
-            accountOpen={accountOpen}
-            onAccountClick={() => setAccountOpen((open) => !open)}
-          />
-        </section>
-        <div className="space-y-[12px] px-[24px] text-[16px]">
-          <label className="flex flex-wrap items-center gap-[12px]">
+    <div className="flex min-h-svh flex-col bg-white text-[#16181d]">
+      <NavigationHeader
+        auth={auth}
+        userName={userName}
+        loginHref="#preview-controls"
+        accountOpen={accountOpen}
+        onAccountClick={() => setAccountOpen((open) => !open)}
+      />
+      <main className="mx-auto w-full max-w-[1512px] flex-1 px-[60px] py-[64px]">
+        <p className="text-[14px] tracking-[0.04em] text-[#8b929e]">HEADER PREVIEW</p>
+        <h1 className="mt-[12px] text-[28px] leading-[40px] font-medium tracking-[-0.84px]">
+          페이지 상단에 적용한 헤더
+        </h1>
+        <p className="mt-[12px] text-[16px] leading-[26px] text-[#737b88]">
+          아래 본문은 배치를 확인하기 위한 임시 영역입니다.
+        </p>
+      </main>
+      <aside
+        id="preview-controls"
+        aria-label="헤더 미리보기 설정"
+        className="border-t border-[#eef0f3] bg-[#fafbfc]"
+      >
+        <div className="mx-auto flex max-w-[1512px] items-center gap-[24px] px-[60px] py-[20px] text-[14px]">
+          <span className="text-[#737b88]">미리보기 설정</span>
+          <label className="flex items-center gap-[8px]">
+            로그인 상태
+            <select
+              value={auth}
+              onChange={(event) => {
+                setAuth(event.target.value as 'guest' | 'signedIn')
+                setAccountOpen(false)
+              }}
+              className="rounded-[5px] border border-[#dde1e7] bg-white px-[12px] py-[8px]"
+            >
+              <option value="signedIn">로그인 후</option>
+              <option value="guest">로그인 전</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-[8px]">
             표시 이름
             <input
               value={userName}
               onChange={(event) => setUserName(event.target.value)}
-              className="min-w-0 rounded-[5px] border border-slate-300 bg-white px-[12px] py-[8px]"
+              className="w-[180px] rounded-[5px] border border-[#dde1e7] bg-white px-[12px] py-[8px]"
             />
           </label>
-          <p className="text-slate-600">
-            프로필 버튼을 누르면 열림 스타일을 확인할 수 있어요. 실제 계정 메뉴와 서버 연결은 추후
-            연결합니다.
-          </p>
-          <p id="login-preview" className="text-slate-600">
-            로그인 화면 이동은 추후 연결합니다.
-          </p>
+          <span className="ml-auto text-[#737b88]">데스크톱 · UI 미리보기</span>
         </div>
-      </div>
-    </main>
+      </aside>
+    </div>
   )
 }
