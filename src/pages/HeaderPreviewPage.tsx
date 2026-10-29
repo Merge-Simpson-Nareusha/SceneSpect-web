@@ -14,7 +14,7 @@ export default function HeaderPreviewPage() {
         userName={userName}
         loginHref="#preview-controls"
         accountOpen={accountOpen}
-        onAccountClick={() => setAccountOpen((open) => !open)}
+        onAccountOpenChange={setAccountOpen}
       />
       <main className="mx-auto w-full max-w-[1512px] flex-1 px-[60px] py-[64px]">
         <p className="text-[14px] tracking-[0.04em] text-[#8b929e]">HEADER PREVIEW</p>
