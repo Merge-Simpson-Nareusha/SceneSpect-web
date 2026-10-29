@@ -33,17 +33,17 @@ export default function NavigationHeader({
     'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2962ff]'
 
   return (
-    <header className="relative flex min-h-[80px] w-full flex-wrap items-center justify-between gap-y-[12px] bg-white/80 px-[60px] text-[#16181d] backdrop-blur-[20px] max-md:px-[20px] max-md:py-[10px]">
+    <header className="relative flex h-[80px] w-full items-center justify-between bg-white/80 px-[60px] text-[#16181d] backdrop-blur-[20px]">
       <a href={homeHref} aria-label="SceneSpect 홈" className={`shrink-0 ${focusStyle}`}>
         <img
           src={logo}
           alt="SceneSpect"
-          className="block h-[60px] w-[191px] object-contain max-md:h-[44px] max-md:w-[140px]"
+          className="block h-[60px] w-[191px] object-contain"
         />
       </a>
       <nav
         aria-label="주 메뉴"
-        className="flex items-center gap-[50px] text-[22px] leading-normal tracking-[-1.32px] max-md:order-3 max-md:w-full max-md:justify-center max-md:gap-[24px] max-md:text-[16px]"
+        className="flex shrink-0 items-center gap-[50px] text-[22px] leading-normal tracking-[-1.32px]"
       >
         {links.map(({ label, href }) => (
           <a
@@ -55,11 +55,11 @@ export default function NavigationHeader({
           </a>
         ))}
       </nav>
-      <div className="flex w-[200px] shrink-0 justify-end max-md:w-auto">
+      <div className="flex w-[200px] shrink-0 justify-end">
         {auth === 'guest' ? (
           <a
             href={loginHref}
-            className={`rounded-[5px] bg-[#f1f5f9] px-[20px] py-[8px] text-[30px] leading-[36px] font-light transition-colors hover:bg-[#e2e8f0] max-md:text-[20px] max-md:leading-[28px] ${focusStyle}`}
+            className={`rounded-[5px] bg-[#f1f5f9] px-[20px] py-[8px] text-[30px] leading-[36px] font-light transition-colors hover:bg-[#e2e8f0] ${focusStyle}`}
           >
             로그인
           </a>
@@ -69,7 +69,7 @@ export default function NavigationHeader({
             aria-label={`${userName} 계정 메뉴`}
             aria-expanded={accountOpen}
             onClick={onAccountClick}
-            className={`flex max-w-[200px] cursor-pointer items-center gap-[10px] rounded-[5px] px-[16px] py-[8px] text-[28px] leading-[33px] font-light transition-colors hover:bg-[#e2e8f0] max-md:max-w-[140px] max-md:text-[20px] max-md:leading-[28px] ${accountOpen ? 'bg-[#e2e8f0]' : 'bg-[#f1f5f9]'} ${focusStyle}`}
+            className={`flex max-w-[200px] cursor-pointer items-center gap-[10px] rounded-[5px] px-[16px] py-[8px] text-[28px] leading-[33px] font-light transition-colors hover:bg-[#e2e8f0] ${accountOpen ? 'bg-[#e2e8f0]' : 'bg-[#f1f5f9]'} ${focusStyle}`}
           >
             <img src={userIcon} alt="" className="size-[23.5px] shrink-0" />
             <span className="min-w-0 truncate">{userName}</span>
