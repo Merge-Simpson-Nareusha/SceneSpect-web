@@ -12,6 +12,8 @@ export default function CommonPreviewPage() {
   const [mockBar, setMockBar] = useState(false)
   const [auth, setAuth] = useState<'guest' | 'signedIn'>('signedIn')
   const [name, setName] = useState('이름임')
+  const [email, setEmail] = useState('example@gmail.com')
+  const [originalSizes, setOriginalSizes] = useState(false)
   const [message, setMessage] = useState(
     '버튼을 누르면 UI 이벤트를 확인할 수 있어요. 서버 요청은 보내지 않습니다.',
   )
@@ -23,6 +25,7 @@ export default function CommonPreviewPage() {
       <NavigationHeader
         auth={auth}
         userName={name}
+        email={email}
         homeHref="?preview=common"
         loginHref="#preview-settings"
         profileHref="#account-preview"
@@ -65,6 +68,22 @@ export default function CommonPreviewPage() {
             />
           </label>
           <label className="flex items-center gap-[8px]">
+            이메일
+            <input
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="rounded-[5px] border border-slate-300 px-[12px] py-[8px]"
+            />
+          </label>
+          <label className="flex items-center gap-[8px]">
+            <input
+              type="checkbox"
+              checked={originalSizes}
+              onChange={(event) => setOriginalSizes(event.target.checked)}
+            />
+            Figma 원본 글씨·버튼 크기 비교
+          </label>
+          <label className="flex items-center gap-[8px]">
             <input
               type="checkbox"
               checked={mockBar}
@@ -100,16 +119,22 @@ export default function CommonPreviewPage() {
             Button/Base
           </h2>
           <p className="mt-[8px] text-[14px] text-[#737b88]">
-            Figma 원본 크기 · 오른쪽은 Hover 상태 고정 예시 · 왼쪽도 마우스를 올리면 변합니다.
+            {originalSizes ? 'Figma 원본 크기' : '실사용 크기 · 일반 16px / CTA 20px'} · 오른쪽은
+            Hover 상태 고정 예시입니다.
           </p>
           <div className="mt-[32px] space-y-[32px]">
             {variants.map((variant) => (
               <div key={variant}>
                 <h3 className="mb-[12px] text-[14px] text-[#737b88]">{variant}</h3>
                 <div className="flex flex-wrap gap-[24px]">
-                  <CommonButton variant={variant} onClick={() => action(`${variant} Default`)} />
                   <CommonButton
                     variant={variant}
+                    size={originalSizes ? 'design' : 'default'}
+                    onClick={() => action(`${variant} Default`)}
+                  />
+                  <CommonButton
+                    variant={variant}
+                    size={originalSizes ? 'design' : 'default'}
                     previewState="hover"
                     onClick={() => action(`${variant} Hover`)}
                   />
@@ -130,20 +155,24 @@ export default function CommonPreviewPage() {
             프로필 버튼을 누르면 Open 상태를 확인할 수 있어요. 바깥 클릭·Escape·Tab 이동으로
             닫힙니다.
           </p>
-          <div className="mt-[32px] flex min-h-[390px] items-start gap-[80px]">
-            <div className="w-[225px] space-y-[12px]">
+          <div className="mt-[32px] flex min-h-[360px] items-start gap-[48px]">
+            <div className="min-w-0 flex-1 space-y-[12px]">
               <p className="text-[14px] text-[#737b88]">Default → Open</p>
               <AccountButton
                 userName={name}
+                email={email}
+                size={originalSizes ? 'design' : 'default'}
                 profileHref="#account-preview"
                 settingsHref="#preview-settings"
                 onLogout={() => action('로그아웃')}
               />
             </div>
-            <div className="w-[225px] space-y-[12px]">
+            <div className="min-w-0 flex-1 space-y-[12px]">
               <p className="text-[14px] text-[#737b88]">Hover → Open</p>
               <AccountButton
                 userName={name}
+                email={email}
+                size={originalSizes ? 'design' : 'default'}
                 previewState="hover"
                 profileHref="#account-preview"
                 settingsHref="#preview-settings"

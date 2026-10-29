@@ -12,7 +12,7 @@ export type AccountButtonProps = {
   profileHref?: string
   settingsHref?: string
   onLogout?: () => void
-  size?: 'design' | 'header'
+  size?: 'default' | 'design' | 'header'
   open?: boolean
   onOpenChange?: (open: boolean) => void
   previewState?: 'default' | 'hover'
@@ -25,7 +25,7 @@ export default function AccountButton({
   profileHref = '#profile',
   settingsHref = '#settings',
   onLogout,
-  size = 'design',
+  size = 'default',
   open,
   onOpenChange,
   previewState = 'default',
@@ -66,11 +66,12 @@ export default function AccountButton({
 
   const focusStyle =
     'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2962ff]'
-  const rowStyle = `flex min-h-[40px] w-full items-center gap-[12px] rounded-[4px] px-[10px] text-left text-[20px] leading-[28px] hover:bg-[#f1f5f9] ${focusStyle}`
+  const originalSize = size === 'design'
+  const rowStyle = `flex min-h-[40px] w-full items-center gap-[12px] rounded-[6px] px-[10px] text-left ${originalSize ? 'text-[20px] leading-[28px]' : 'text-[16px] leading-[24px]'} transition-colors hover:bg-[#f1f5f9] motion-reduce:transition-none ${focusStyle}`
   return (
     <div
       ref={rootRef}
-      className="relative min-w-0 text-[#16181d]"
+      className="relative w-max max-w-full min-w-0 text-[#16181d]"
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false)
       }}
@@ -83,50 +84,56 @@ export default function AccountButton({
         aria-expanded={expanded}
         aria-controls={panelId}
         onClick={() => setOpen(!expanded)}
-        className={`flex max-w-full min-w-0 cursor-pointer items-center rounded-[5px] py-[8px] transition-colors hover:bg-[#e2e8f0] motion-reduce:transition-none ${expanded || previewState === 'hover' ? 'bg-[#e2e8f0]' : 'bg-[#f1f5f9]'} ${size === 'header' ? 'min-h-[44px] gap-[8px] px-[12px] text-[18px] leading-[26px]' : 'h-[49px] gap-[10px] px-[16px] text-[28px] leading-[33px] font-light'} ${focusStyle}`}
+        className={`flex w-max max-w-full min-w-0 cursor-pointer items-center gap-[8px] rounded-[6px] py-[8px] transition-colors hover:bg-[#e2e8f0] motion-reduce:transition-none ${expanded || previewState === 'hover' ? 'bg-[#e2e8f0]' : 'bg-[#f1f5f9]'} ${originalSize ? 'min-h-[49px] px-[16px] text-[28px] leading-[33px] font-light' : 'min-h-[44px] px-[12px] text-[16px] leading-[24px] font-normal'} ${focusStyle}`}
       >
         <img
           src={userIcon}
           alt=""
-          className={`${size === 'header' ? 'size-[20px]' : 'size-[23.5px]'} shrink-0`}
+          className={`${originalSize ? 'size-[23.5px]' : 'size-[20px]'} shrink-0`}
         />
-        <span className="min-w-0 truncate">{displayName}</span>
+        <span className="min-w-0 text-left [overflow-wrap:anywhere]">{displayName}</span>
         <span
           className={`flex w-[16px] shrink-0 items-center justify-center transition-transform motion-reduce:transition-none ${expanded ? 'rotate-180' : ''}`}
         >
-          <img src={chevron} alt="" className="h-[17.5px] w-[9.3px] rotate-90" />
+          <img
+            src={chevron}
+            alt=""
+            className={`${originalSize ? 'h-[17.5px] w-[9.3px]' : 'h-[14px] w-[7.43px]'} rotate-90`}
+          />
         </span>
       </button>
       <div
         id={panelId}
         hidden={!expanded}
         aria-label="계정 옵션"
-        className="absolute top-[calc(100%+11px)] right-0 z-30 w-[225px] rounded-[5px] border border-[#f1f5f9] bg-white p-[16px] shadow-sm"
+        className={`absolute top-[calc(100%+8px)] z-30 w-max max-w-[min(420px,calc(100vw-48px))] rounded-[8px] border border-[#e8edf3] bg-white p-[16px] shadow-[0_8px_24px_rgba(22,24,29,0.08)] ${size === 'header' ? 'right-0' : 'left-0'} ${originalSize ? 'min-w-[225px]' : 'min-w-[260px]'}`}
       >
-        <div className="flex items-center gap-[10px] py-[2px]">
-          <div aria-hidden="true" className="size-[50px] shrink-0 rounded-full bg-[#f1f5f9]" />
+        <div className="flex items-center gap-[12px] py-[2px]">
+          <div
+            aria-hidden="true"
+            className={`${originalSize ? 'size-[50px]' : 'size-[40px]'} shrink-0 rounded-full bg-[#f1f5f9]`}
+          />
           <div className="min-w-0">
-            <p className="truncate text-[28px] leading-[34px]" title={displayName}>
+            <p
+              className={`${originalSize ? 'text-[28px] leading-[34px]' : 'text-[18px] leading-[26px] font-medium'} [overflow-wrap:anywhere]`}
+            >
               {displayName}
             </p>
-            <p
-              className="truncate text-[12px] leading-[18px] font-light text-[#807d7d]"
-              title={email}
-            >
+            <p className="mt-[2px] text-[13px] leading-[20px] [overflow-wrap:anywhere] text-[#667085]">
               {email}
             </p>
           </div>
         </div>
-        <img src={divider} alt="" className="my-[20px] h-px w-full" />
+        <img src={divider} alt="" className="my-[12px] h-px w-full" />
         <a href={profileHref} onClick={() => setOpen(false)} className={rowStyle}>
           <img src={profileIcon} alt="" className="h-[17.5px] w-[14.5px] shrink-0" />
           마이페이지
         </a>
-        <a href={settingsHref} onClick={() => setOpen(false)} className={`${rowStyle} mt-[12px]`}>
+        <a href={settingsHref} onClick={() => setOpen(false)} className={`${rowStyle} mt-[4px]`}>
           <img src={settingsIcon} alt="" className="h-[17.5px] w-[15.8px] shrink-0" />
           설정
         </a>
-        <img src={divider} alt="" className="my-[20px] h-px w-full" />
+        <img src={divider} alt="" className="my-[12px] h-px w-full" />
         <button
           type="button"
           className={`${rowStyle} cursor-pointer text-[#ef4444]`}

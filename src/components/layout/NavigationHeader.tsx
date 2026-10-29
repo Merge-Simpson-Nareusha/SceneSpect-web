@@ -41,8 +41,8 @@ export default function NavigationHeader({
   const focusStyle =
     'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2962ff]'
   return (
-    <header className="relative z-10 h-[80px] w-full border-b border-[#eef0f3] bg-white/80 text-[#16181d] backdrop-blur-[20px]">
-      <div className="mx-auto grid h-full max-w-[1512px] grid-cols-[minmax(164px,1fr)_auto_minmax(164px,1fr)] items-center gap-x-[24px] px-[clamp(24px,3.97vw,60px)]">
+    <header className="relative z-10 w-full border-b border-[#eef0f3] bg-white/80 text-[#16181d] backdrop-blur-[20px]">
+      <div className="mx-auto grid min-h-[80px] max-w-[1512px] grid-cols-[minmax(164px,1fr)_auto_minmax(164px,1fr)] items-center gap-x-[24px] px-[clamp(24px,3.97vw,60px)] py-[12px]">
         <a
           href={homeHref}
           aria-label="SceneSpect 홈"
@@ -52,7 +52,7 @@ export default function NavigationHeader({
         </a>
         <nav
           aria-label="주 메뉴"
-          className="flex items-center gap-[clamp(24px,2.65vw,40px)] text-[18px] leading-[26px] tracking-[-0.36px]"
+          className="flex items-center gap-[clamp(24px,2.12vw,32px)] text-[16px] leading-[24px] tracking-[-0.32px]"
         >
           {links.map(({ label, href }) => (
             <a
