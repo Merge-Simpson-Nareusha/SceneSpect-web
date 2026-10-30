@@ -23,17 +23,25 @@ export default function CommonPreviewPage() {
     <div className="min-h-svh min-w-[1024px] bg-[#f8fafc] text-[#16181d]">
       {mockBar && <MockMacMenuBar />}
       <NavigationHeader
-        auth={auth}
-        userName={name}
-        email={email}
         homeHref="?preview=common"
-        loginHref="#preview-settings"
-        profileHref="#account-preview"
-        settingsHref="#preview-settings"
-        onLogout={() => {
-          setAuth('guest')
-          setMessage('로그아웃 콜백 확인 — 미리보기만 로그인 전 상태로 변경했습니다.')
-        }}
+        links={[
+          { label: '서비스', href: '#service' },
+          { label: '프로젝트 소개', href: '#projects' },
+          { label: '팀 소개', href: '#team' },
+        ]}
+        {...(auth === 'signedIn'
+          ? {
+              auth,
+              userName: name,
+              email,
+              profileHref: '#account-preview',
+              settingsHref: '#preview-settings',
+              onLogout: () => {
+                setAuth('guest')
+                setMessage('로그아웃 콜백 확인 — 미리보기만 로그인 전 상태로 변경했습니다.')
+              },
+            }
+          : { auth, loginHref: '#preview-settings' })}
       />
       <main className="mx-auto max-w-[1512px] space-y-[40px] px-[60px] py-[40px]">
         <div>
@@ -81,7 +89,7 @@ export default function CommonPreviewPage() {
               checked={originalSizes}
               onChange={(event) => setOriginalSizes(event.target.checked)}
             />
-            Figma 원본 글씨·버튼 크기 비교
+            Figma 기준 글씨·버튼 크기 비교
           </label>
           <label className="flex items-center gap-[8px]">
             <input
@@ -119,8 +127,10 @@ export default function CommonPreviewPage() {
             Button/Base
           </h2>
           <p className="mt-[8px] text-[14px] text-[#737b88]">
-            {originalSizes ? 'Figma 원본 크기' : '실사용 크기 · 일반 16px / CTA 20px'} · 오른쪽은
-            Hover 상태 고정 예시입니다.
+            {originalSizes
+              ? 'Figma 기준 크기 (배치는 실사용 기준)'
+              : '실사용 크기 · 일반 16px / CTA 20px'}{' '}
+            · 오른쪽은 Hover 상태 고정 예시입니다.
           </p>
           <div className="mt-[32px] space-y-[32px]">
             {variants.map((variant) => (
@@ -131,13 +141,17 @@ export default function CommonPreviewPage() {
                     variant={variant}
                     size={originalSizes ? 'design' : 'default'}
                     onClick={() => action(`${variant} Default`)}
-                  />
+                  >
+                    {variant.startsWith('cta') ? '로그인 하러가기' : '로그인'}
+                  </CommonButton>
                   <CommonButton
                     variant={variant}
                     size={originalSizes ? 'design' : 'default'}
                     previewState="hover"
                     onClick={() => action(`${variant} Hover`)}
-                  />
+                  >
+                    {variant.startsWith('cta') ? '로그인 하러가기' : '로그인'}
+                  </CommonButton>
                 </div>
               </div>
             ))}

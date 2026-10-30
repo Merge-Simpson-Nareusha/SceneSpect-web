@@ -10,11 +10,27 @@ export default function HeaderPreviewPage() {
   return (
     <div className="flex min-h-svh flex-col bg-white text-[#16181d]">
       <NavigationHeader
-        auth={auth}
-        userName={userName}
-        loginHref="#preview-controls"
-        accountOpen={accountOpen}
-        onAccountOpenChange={setAccountOpen}
+        homeHref="?preview=header"
+        links={[
+          { label: '서비스', href: '#service' },
+          { label: '프로젝트 소개', href: '#projects' },
+          { label: '팀 소개', href: '#team' },
+        ]}
+        {...(auth === 'signedIn'
+          ? {
+              auth,
+              userName,
+              email: 'example@gmail.com',
+              profileHref: '#preview-controls',
+              settingsHref: '#preview-controls',
+              onLogout: () => {
+                setAuth('guest')
+                setAccountOpen(false)
+              },
+              accountOpen,
+              onAccountOpenChange: setAccountOpen,
+            }
+          : { auth, loginHref: '#preview-controls' })}
       />
       <main className="mx-auto w-full max-w-[1512px] flex-1 px-[60px] py-[64px]">
         <p className="text-[14px] tracking-[0.04em] text-[#8b929e]">HEADER PREVIEW</p>
@@ -37,7 +53,7 @@ export default function HeaderPreviewPage() {
             <select
               value={auth}
               onChange={(event) => {
-                setAuth(event.target.value as 'guest' | 'signedIn')
+                setAuth(event.target.value === 'guest' ? 'guest' : 'signedIn')
                 setAccountOpen(false)
               }}
               className="rounded-[5px] border border-[#dde1e7] bg-white px-[12px] py-[8px]"
