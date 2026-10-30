@@ -70,6 +70,9 @@ import NavigationHeader from './components/layout/NavigationHeader'
 `previewState="hover"`는 미리보기에서 Hover 색상을 고정하기 위한 옵션입니다.
 실제 컴포넌트는 마우스 Hover와 키보드 포커스를 자체 지원합니다.
 
+계정 드롭다운 정렬은 `align="start"`(기본) 또는 `align="end"`로 지정합니다.
+헤더에서는 `align="end"`를 사용합니다. `size`는 크기만 담당하며 `default`, `design` 중 선택합니다.
+
 계정 드롭다운은 기본적으로 내부 상태로 동작합니다. 부모가 제어하려면
 `AccountButton`에 `open`, `onOpenChange`를 함께 전달하거나,
 `NavigationHeader`에 `accountOpen`, `onAccountOpenChange`를 함께 전달합니다.

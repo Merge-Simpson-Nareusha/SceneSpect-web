@@ -38,7 +38,7 @@ export default function NavigationHeader({
   accountOpen,
   onAccountOpenChange,
 }: NavigationHeaderProps) {
-  const focusStyle =
+  const focusClasses =
     'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2962ff]'
   return (
     <header className="relative z-10 w-full border-b border-[#eef0f3] bg-white/80 text-[#16181d] backdrop-blur-[20px]">
@@ -46,7 +46,7 @@ export default function NavigationHeader({
         <a
           href={homeHref}
           aria-label="SceneSpect 홈"
-          className={`flex min-h-[44px] w-fit items-center rounded-[4px] ${focusStyle}`}
+          className={`flex min-h-[44px] w-fit items-center rounded-[4px] ${focusClasses}`}
         >
           <BrandLogo width={164} decorative />
         </a>
@@ -59,7 +59,7 @@ export default function NavigationHeader({
               key={href}
               href={href}
               aria-current={activeHref === href ? 'page' : undefined}
-              className={`flex min-h-[44px] items-center rounded-[4px] whitespace-nowrap transition-colors duration-150 hover:text-[#2962ff] motion-reduce:transition-none ${activeHref === href ? 'text-[#2962ff]' : ''} ${focusStyle}`}
+              className={`flex min-h-[44px] items-center rounded-[4px] whitespace-nowrap transition-colors duration-150 hover:text-[#2962ff] motion-reduce:transition-none ${activeHref === href ? 'text-[#2962ff]' : ''} ${focusClasses}`}
             >
               {label}
             </a>
@@ -67,12 +67,10 @@ export default function NavigationHeader({
         </nav>
         <div className="flex min-w-0 justify-end">
           {auth === 'guest' ? (
-            <CommonButtonLink href={loginHref} size="header">
-              로그인
-            </CommonButtonLink>
+            <CommonButtonLink href={loginHref}>로그인</CommonButtonLink>
           ) : (
             <AccountButton
-              size="header"
+              align="end"
               userName={userName}
               email={email}
               profileHref={profileHref}

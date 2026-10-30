@@ -12,7 +12,8 @@ export type AccountButtonProps = {
   profileHref?: string
   settingsHref?: string
   onLogout?: () => void
-  size?: 'default' | 'design' | 'header'
+  size?: 'default' | 'design'
+  align?: 'start' | 'end'
   open?: boolean
   onOpenChange?: (open: boolean) => void
   previewState?: 'default' | 'hover'
@@ -26,6 +27,7 @@ export default function AccountButton({
   settingsHref = '#settings',
   onLogout,
   size = 'default',
+  align = 'start',
   open,
   onOpenChange,
   previewState = 'default',
@@ -64,10 +66,10 @@ export default function AccountButton({
     }
   }, [expanded, open, onOpenChange])
 
-  const focusStyle =
+  const focusClasses =
     'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2962ff]'
   const originalSize = size === 'design'
-  const rowStyle = `flex min-h-[40px] w-full items-center gap-[12px] rounded-[6px] px-[10px] text-left ${originalSize ? 'text-[20px] leading-[28px]' : 'text-[16px] leading-[24px]'} transition-colors hover:bg-[#f1f5f9] motion-reduce:transition-none ${focusStyle}`
+  const rowClasses = `flex min-h-[40px] w-full items-center gap-[12px] rounded-[6px] px-[10px] text-left ${originalSize ? 'text-[20px] leading-[28px]' : 'text-[16px] leading-[24px]'} transition-colors hover:bg-[#f1f5f9] motion-reduce:transition-none ${focusClasses}`
   return (
     <div
       ref={rootRef}
@@ -84,7 +86,7 @@ export default function AccountButton({
         aria-expanded={expanded}
         aria-controls={panelId}
         onClick={() => setOpen(!expanded)}
-        className={`flex w-max max-w-full min-w-0 cursor-pointer items-center gap-[8px] rounded-[6px] py-[8px] transition-colors hover:bg-[#e2e8f0] motion-reduce:transition-none ${expanded || previewState === 'hover' ? 'bg-[#e2e8f0]' : 'bg-[#f1f5f9]'} ${originalSize ? 'min-h-[49px] px-[16px] text-[28px] leading-[33px] font-light' : 'min-h-[44px] px-[12px] text-[16px] leading-[24px] font-normal'} ${focusStyle}`}
+        className={`flex w-max max-w-full min-w-0 cursor-pointer items-center gap-[8px] rounded-[6px] py-[8px] transition-colors hover:bg-[#e2e8f0] motion-reduce:transition-none ${expanded || previewState === 'hover' ? 'bg-[#e2e8f0]' : 'bg-[#f1f5f9]'} ${originalSize ? 'min-h-[49px] px-[16px] text-[28px] leading-[33px] font-light' : 'min-h-[44px] px-[12px] text-[16px] leading-[24px] font-normal'} ${focusClasses}`}
       >
         <img
           src={userIcon}
@@ -106,7 +108,7 @@ export default function AccountButton({
         id={panelId}
         hidden={!expanded}
         aria-label="계정 옵션"
-        className={`absolute top-[calc(100%+8px)] z-30 w-max max-w-[min(420px,calc(100vw-48px))] rounded-[8px] border border-[#e8edf3] bg-white p-[16px] shadow-[0_8px_24px_rgba(22,24,29,0.08)] ${size === 'header' ? 'right-0' : 'left-0'} ${originalSize ? 'min-w-[225px]' : 'min-w-[260px]'}`}
+        className={`absolute top-[calc(100%+8px)] z-30 w-max max-w-[min(420px,calc(100vw-48px))] rounded-[8px] border border-[#e8edf3] bg-white p-[16px] shadow-[0_8px_24px_rgba(22,24,29,0.08)] ${align === 'end' ? 'right-0' : 'left-0'} ${originalSize ? 'min-w-[225px]' : 'min-w-[260px]'}`}
       >
         <div className="flex items-center gap-[12px] py-[2px]">
           <div
@@ -125,18 +127,18 @@ export default function AccountButton({
           </div>
         </div>
         <img src={divider} alt="" className="my-[12px] h-px w-full" />
-        <a href={profileHref} onClick={() => setOpen(false)} className={rowStyle}>
+        <a href={profileHref} onClick={() => setOpen(false)} className={rowClasses}>
           <img src={profileIcon} alt="" className="h-[17.5px] w-[14.5px] shrink-0" />
           마이페이지
         </a>
-        <a href={settingsHref} onClick={() => setOpen(false)} className={`${rowStyle} mt-[4px]`}>
+        <a href={settingsHref} onClick={() => setOpen(false)} className={`${rowClasses} mt-[4px]`}>
           <img src={settingsIcon} alt="" className="h-[17.5px] w-[15.8px] shrink-0" />
           설정
         </a>
         <img src={divider} alt="" className="my-[12px] h-px w-full" />
         <button
           type="button"
-          className={`${rowStyle} cursor-pointer text-[#ef4444]`}
+          className={`${rowClasses} cursor-pointer text-[#ef4444]`}
           onClick={() => {
             setOpen(false)
             onLogout?.()

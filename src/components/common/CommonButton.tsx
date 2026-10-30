@@ -5,7 +5,7 @@ import darkArrow from '../../assets/icons/common/arrow-dark.svg'
 export type ButtonVariant = 'compactLight' | 'compactDark' | 'ctaLight' | 'ctaDark'
 export type ButtonAppearance = {
   variant?: ButtonVariant
-  size?: 'default' | 'design' | 'header'
+  size?: 'default' | 'design'
   previewState?: 'default' | 'hover'
 }
 
@@ -31,7 +31,7 @@ function buttonClasses({
   ].join(' ')
 }
 
-function Content({
+function ButtonContent({
   variant = 'compactLight',
   size = 'default',
   children,
@@ -70,9 +70,9 @@ export default function CommonButton({
       type={type}
       className={`${buttonClasses({ variant, size, previewState })} cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
-      <Content variant={variant} size={size}>
+      <ButtonContent variant={variant} size={size}>
         {children}
-      </Content>
+      </ButtonContent>
     </button>
   )
 }
@@ -87,9 +87,9 @@ export function CommonButtonLink({
 }: ButtonAppearance & AnchorHTMLAttributes<HTMLAnchorElement>) {
   return (
     <a {...props} className={`${buttonClasses({ variant, size, previewState })} ${className}`}>
-      <Content variant={variant} size={size}>
+      <ButtonContent variant={variant} size={size}>
         {children}
-      </Content>
+      </ButtonContent>
     </a>
   )
 }
