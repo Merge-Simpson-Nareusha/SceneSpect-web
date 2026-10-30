@@ -32,7 +32,7 @@ export default function NavigationHeader(props: NavigationHeaderProps) {
       : {}
   return (
     <header className="relative z-10 w-full bg-white/80 text-[#16181d] backdrop-blur-[20px]">
-      <div className="mx-auto grid min-h-[80px] max-w-[1512px] grid-cols-[minmax(164px,1fr)_auto_minmax(164px,1fr)] items-center gap-x-[24px] px-[clamp(24px,3.97vw,60px)] py-[12px]">
+      <div className="mx-auto grid h-[80px] max-w-[1512px] grid-cols-[minmax(164px,1fr)_auto_minmax(164px,1fr)] items-center gap-x-[24px] px-[clamp(24px,3.97vw,60px)] py-[12px]">
         <a
           href={homeHref}
           aria-label="SceneSpect 홈"

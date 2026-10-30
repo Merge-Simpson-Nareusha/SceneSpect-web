@@ -75,7 +75,7 @@ export default function AccountButton({
   return (
     <div
       ref={rootRef}
-      className="relative w-max max-w-full min-w-0 text-[#16181d]"
+      className="relative w-max max-w-[min(280px,100%)] min-w-0 text-[#16181d]"
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false)
       }}
@@ -88,14 +88,14 @@ export default function AccountButton({
         aria-expanded={expanded}
         aria-controls={panelId}
         onClick={() => setOpen(!expanded)}
-        className={`flex w-max max-w-full min-w-0 cursor-pointer items-center gap-[10px] ${commonStyles.controlRadius} py-[8px] transition-colors hover:bg-[#e2e8f0] motion-reduce:transition-none ${previewState === 'hover' ? 'bg-[#e2e8f0]' : 'bg-[#f1f5f9]'} ${originalSize ? 'min-h-[49px] px-[16px] text-[28px] leading-[33px] font-light' : 'min-h-[44px] px-[12px] text-[16px] leading-[24px] font-normal'} ${focusClasses}`}
+        className={`flex w-full min-w-0 cursor-pointer items-center gap-[10px] ${commonStyles.controlRadius} py-[8px] transition-colors hover:bg-[#e2e8f0] motion-reduce:transition-none ${previewState === 'hover' ? 'bg-[#e2e8f0]' : 'bg-[#f1f5f9]'} ${originalSize ? 'min-h-[49px] px-[16px] text-[28px] leading-[33px] font-light' : 'min-h-[44px] px-[12px] text-[16px] leading-[24px] font-normal'} ${focusClasses}`}
       >
         <img
           src={userIcon}
           alt=""
           className={`${originalSize ? 'size-[23.5px]' : 'size-[20px]'} shrink-0`}
         />
-        <span className="min-w-0 text-left [overflow-wrap:anywhere]">{displayName}</span>
+        <span className="min-w-0 truncate text-left">{displayName}</span>
         <span
           className={`flex w-[16px] shrink-0 items-center justify-center transition-transform motion-reduce:transition-none ${expanded ? 'rotate-180' : ''}`}
         >
