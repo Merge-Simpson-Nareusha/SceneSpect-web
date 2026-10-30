@@ -3,7 +3,7 @@ import BrandLogo from '../components/common/BrandLogo'
 import CommonButton from '../components/common/CommonButton'
 import type { ButtonVariant } from '../components/common/CommonButton'
 import AccountButton from '../components/common/AccountButton'
-import MockMacMenuBar from '../components/common/MockMacMenuBar'
+import MockMacMenuBar from './MockMacMenuBar'
 import NavigationHeader from '../components/layout/NavigationHeader'
 
 const variants: ButtonVariant[] = ['compactLight', 'compactDark', 'ctaLight', 'ctaDark']

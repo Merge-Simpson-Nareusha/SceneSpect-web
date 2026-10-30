@@ -6,9 +6,14 @@ React + TypeScript + Tailwind CSS로 구현한 데스크톱 UI입니다. 인증 
 
 `npm run dev` 후 다음 주소를 엽니다.
 
-- `http://localhost:5173/?preview=common`: 00 전체, 버튼 기본·Hover 예시, 계정 드롭다운
-- `http://localhost:5173/?preview=header`: 실제 페이지 상단에 배치한 헤더
+- `http://localhost:5173/components-preview.html`: 00 전체, 버튼 기본·Hover 예시, 계정 드롭다운
+- `http://localhost:5173/components-preview.html?preview=header`: 실제 페이지 상단에 배치한 헤더
 - `/`: 기존 회원가입 화면
+
+미리보기는 `components-preview.html`과 `src/dev/`의 별도 개발용 진입점을 사용합니다.
+기존 `App.tsx`와 `src/main.tsx`에는 미리보기 분기를 추가하지 않습니다.
+기본 `npm run build`는 `index.html`만 진입점으로 사용하므로 미리보기 HTML과 전용 코드는 배포 결과에 포함되지 않습니다.
+미리보기에서만 사용하는 Mac 메뉴바도 `src/dev/`에 둡니다.
 
 ## Figma 대응
 
