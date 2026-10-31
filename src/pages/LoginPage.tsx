@@ -14,6 +14,11 @@ function LoginPage() {
   const [loginError, setLoginError] = useState('')
 
   const handleLogin = () => {
+    if (!email.trim() || !password) {
+      setLoginError('이메일 또는 비밀번호를 입력해 주세요.')
+      return
+    }
+
     // 서버 연결 전 임시로 로그인 실패 상태를 표시합니다.
     setLoginError('이메일 또는 비밀번호를 확인해 주세요.')
   }
@@ -52,6 +57,7 @@ function LoginPage() {
                 label="이메일"
                 labelActionText="이메일 찾기"
                 placeholder="example@email.com"
+                required
                 autoComplete="email"
                 value={email}
                 onChange={(event) => {
@@ -65,6 +71,7 @@ function LoginPage() {
                 labelActionText="비밀번호 찾기"
                 type="password"
                 placeholder="비밀번호를 입력해주세요"
+                required
                 autoComplete="current-password"
                 showPasswordToggle
                 value={password}
