@@ -3,6 +3,7 @@
 // - 계정 정보, 비밀번호, 이메일 인증, 약관 동의, 가입 완료 단계를 다룹니다.
 // - 약관 체크박스/전체 동의나 인증번호 칸은 화면에서 반복될 때 별도 컴포넌트로 분리합니다.
 // - 서버 요청 함수는 services/auth.ts에 직접 작성하지 않고, 그 파일의 함수를 연결합니다.
+import { startSignup } from '../services/auth'
 import FormDivider from '../components/auth/FormDivider'
 import Button from '../components/auth/Button'
 import SocialLoginButton from '../components/auth/SocialLoginButton'
@@ -47,12 +48,24 @@ const SignupPage = ({
   const selectedError = error ? errorMessages[error] : null
   const [currentStep, setCurrentStep] = useState(1)
   const [email, setEmail] = useState('')
+  const [signupSessionId, setSignupSessionId] = useState('')
+  const [requestError, setRequestError] = useState('')
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!isEmailValid) return
 
-    setCurrentStep((step) => Math.min(step + 1, 5))
+    setRequestError('')
+
+    try {
+      const result = await startSignup(email.trim())
+      setSignupSessionId(result.signupSessionId)
+      setCurrentStep(2)
+    } catch (error) {
+      setRequestError(
+        error instanceof Error ? error.message : '회원가입을 시작하지 못했습니다.',
+      )
+    }
   }
 
   const [password, setPassword] = useState('')
@@ -70,7 +83,7 @@ const SignupPage = ({
     password === passwordConfirm
 
   const handlePasswordNext = () => {
-    if (!canContinue) return
+    if (!canContinue || !signupSessionId) return
 
     setCurrentStep((step) => Math.min(step + 1, 5))
   }
@@ -152,9 +165,9 @@ const SignupPage = ({
                 <div className="flex flex-col gap-[0.625rem] max-md:gap-4">
                   <div className="min-h-[1.25em] text-[clamp(0.75rem,1.11cqw,1rem)] leading-tight">
                     <p
-                      className={`text-[#ef4444] ${selectedError ? `visible ${selectedError.textSize}` : 'invisible'}`}
+                      className={`text-[#ef4444] ${selectedError || requestError ? `visible ${selectedError?.textSize ?? 'text-[clamp(0.75rem,1.11cqw,1rem)]'}` : 'invisible'}`}
                     >
-                      {selectedError?.text ?? '\u00a0'}
+                      {selectedError?.text ?? (requestError || '\u00a0')}
                     </p>
                   </div>
                   <Button name="default" onClick={handleNext}>
