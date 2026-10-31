@@ -11,16 +11,22 @@ import scenespectLogoSymbol from '../assets/logos/scenespect-logo-symbol.svg'
 function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [loginError, setLoginError] = useState('')
+
+  const handleLogin = () => {
+    // 서버 연결 전 임시로 로그인 실패 상태를 표시합니다.
+    setLoginError('이메일 또는 비밀번호를 확인해 주세요.')
+  }
 
   return (
-    <div className="@container mx-auto flex h-svh w-full max-w-[2560px] max-md:h-auto max-md:min-h-svh max-md:max-w-none">
-      <div className="flex h-svh w-full gap-[2.78cqw] px-[2.78cqw] py-[4.44svh] max-md:h-auto max-md:min-h-svh max-md:flex-col max-md:gap-0 max-md:px-5 max-md:py-6">
-        <div className="flex w-[45%] shrink-0 items-center justify-center max-md:hidden">
+    <div className="@container login-page mx-auto flex h-svh w-full max-w-[2560px]">
+      <div className="login-page-layout flex h-full w-full gap-[2.78cqw] px-[2.78cqw] py-[4.44svh] max-md:flex-col max-md:gap-0 max-md:px-5 max-md:py-6">
+        <div className="login-page-visual flex w-[45%] shrink-0 items-center justify-center max-md:hidden">
           <img src={authImage} alt="" className="h-full w-full object-contain" />
         </div>
 
-        <section className="flex min-h-0 min-w-0 flex-1 flex-col justify-center px-[9.72cqw] pb-[8.89svh] max-md:w-full max-md:justify-start max-md:px-0 max-md:pb-8">
-          <div className="flex w-full flex-col gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:gap-10">
+        <section className="login-page-panel flex min-h-0 min-w-0 flex-1 flex-col justify-center px-[9.72cqw] max-md:w-full max-md:justify-start max-md:px-0 max-md:pb-8">
+          <div className="login-page-content flex w-full flex-col">
             <header className="flex w-full flex-col items-start gap-[clamp(0.5rem,1.39cqw,1.25rem)]">
               <img
                 src={scenespectLogoSymbol}
@@ -39,7 +45,7 @@ function LoginPage() {
               </div>
             </header>
 
-            <div className="flex flex-col gap-[clamp(1rem,1.67cqw,1.5rem)] max-md:gap-6">
+            <div className="login-page-fields flex flex-col">
               <AuthFormField
                 name="email"
                 type="email"
@@ -48,7 +54,10 @@ function LoginPage() {
                 placeholder="example@email.com"
                 autoComplete="email"
                 value={email}
-                onChange={(event) => setEmail(event.currentTarget.value)}
+                onChange={(event) => {
+                  setEmail(event.currentTarget.value)
+                  setLoginError('')
+                }}
               />
               <AuthFormField
                 name="password"
@@ -59,12 +68,24 @@ function LoginPage() {
                 autoComplete="current-password"
                 showPasswordToggle
                 value={password}
-                onChange={(event) => setPassword(event.currentTarget.value)}
+                onChange={(event) => {
+                  setPassword(event.currentTarget.value)
+                  setLoginError('')
+                }}
               />
             </div>
 
-            <div className="flex flex-col gap-[clamp(1rem,1.67cqw,1.5rem)] max-md:gap-6">
-              <Button>로그인하기</Button>
+            <div className="login-page-actions flex flex-col">
+              <div className="flex flex-col gap-[10px]">
+                <p
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className={`min-h-[1.2em] max-md:min-h-[2.4em] text-[16px] leading-[1.2] text-[#EF4444] ${loginError ? 'visible' : 'invisible'}`}
+                >
+                  {loginError || '\u00a0'}
+                </p>
+                <Button onClick={handleLogin}>로그인하기</Button>
+              </div>
               <FormDivider label="소셜계정으로 로그인" />
               <div className="grid grid-cols-2 gap-[clamp(0.5rem,0.69cqw,0.625rem)] max-md:gap-3">
                 <SocialLoginButton name="google" />
