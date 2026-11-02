@@ -14,16 +14,18 @@ function buttonClasses({
   variant = 'compactLight',
   size = 'default',
   previewState = 'default',
-}: ButtonAppearance) {
+  disabled = false,
+}: ButtonAppearance & { disabled?: boolean }) {
   const dark = variant === 'compactDark' || variant === 'ctaDark'
   const cta = variant === 'ctaDark' || variant === 'ctaLight'
+  const showHover = !disabled && previewState === 'hover'
   return [
     'inline-flex shrink-0 items-center gap-[16px] whitespace-nowrap transition-colors duration-150 motion-reduce:transition-none',
     commonStyles.focus,
     cta ? commonStyles.ctaRadius : commonStyles.controlRadius,
     dark
-      ? `text-white hover:bg-[#2a2d34] ${previewState === 'hover' ? 'bg-[#2a2d34]' : 'bg-[#16181d]'}`
-      : `text-[#16181d] hover:bg-[#e2e8f0] ${previewState === 'hover' ? 'bg-[#e2e8f0]' : 'bg-[#f1f5f9]'}`,
+      ? `text-white ${disabled ? '' : 'hover:bg-[#2a2d34]'} ${showHover ? 'bg-[#2a2d34]' : 'bg-[#16181d]'}`
+      : `text-[#16181d] ${disabled ? '' : 'hover:bg-[#e2e8f0]'} ${showHover ? 'bg-[#e2e8f0]' : 'bg-[#f1f5f9]'}`,
     cta
       ? size === 'design'
         ? 'h-[95px] w-[412px] justify-between px-[40px] text-[40px] leading-[48px] font-medium tracking-[-0.8px]'
@@ -65,6 +67,7 @@ export default function CommonButton({
   className = '',
   children,
   type = 'button',
+  disabled = false,
   ...props
 }: ButtonAppearance &
   Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & { children: ReactNode }) {
@@ -72,7 +75,8 @@ export default function CommonButton({
     <button
       {...props}
       type={type}
-      className={`${buttonClasses({ variant, size, previewState })} cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      disabled={disabled}
+      className={`${buttonClasses({ variant, size, previewState, disabled })} cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
       <ButtonContent variant={variant} size={size}>
         {children}

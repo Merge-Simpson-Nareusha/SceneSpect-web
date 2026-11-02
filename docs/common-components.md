@@ -79,6 +79,8 @@ import NavigationHeader from './components/layout/NavigationHeader'
 헤더는 `homeHref`, `links`, `auth`를 필수로 받고, `guest`이면 `loginHref`, `signedIn`이면 계정 정보와 동작이 필수입니다.
 `previewState="hover"`는 미리보기에서 Hover 색상을 고정하기 위한 옵션입니다.
 실제 컴포넌트는 마우스 Hover와 키보드 포커스를 자체 지원합니다.
+`disabled`인 일반/CTA 버튼에는 실제 Hover와 `previewState="hover"` 강제 표시 모두 적용하지 않습니다.
+미리보기에는 각 버튼의 비활성 예시와 Tab·Shift+Tab·Enter·Space 확인용 구역이 있습니다.
 
 계정 드롭다운 정렬은 `align="start"`(기본) 또는 `align="end"`로 지정합니다.
 헤더에서는 `align="end"`를 사용합니다. `size`는 크기만 담당하며 `default`, `design` 중 선택합니다.
