@@ -12,11 +12,18 @@ const examples = [
   { label: '일시정지 · Hover', src: pauseHoverIcon },
 ]
 
+const playbackLabels = {
+  ready: '재생 준비 완료',
+  playing: '재생 중',
+  paused: '일시정지',
+  ended: '재생 완료',
+}
+
 export default function IntroPreviewPage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const videoId = useId()
   const [source, setSource] = useState<{ name: string; url: string } | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
+  const [playback, setPlayback] = useState<keyof typeof playbackLabels>('ready')
   const [ready, setReady] = useState(false)
   const [error, setError] = useState('')
 
@@ -78,7 +85,7 @@ export default function IntroPreviewPage() {
               const file = event.target.files?.[0]
               if (!file) return
               setReady(false)
-              setIsPlaying(false)
+              setPlayback('ready')
               setError('')
               setSource({ name: file.name, url: URL.createObjectURL(file) })
             }}
@@ -100,12 +107,16 @@ export default function IntroPreviewPage() {
               preload="metadata"
               className="mb-[24px] max-h-[420px] w-full"
               onLoadedData={() => setReady(true)}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              onEnded={() => setIsPlaying(false)}
+              onPlay={() => setPlayback('playing')}
+              onPause={(event) => setPlayback(event.currentTarget.ended ? 'ended' : 'paused')}
+              onEnded={() => setPlayback('ended')}
+              onSeeked={(event) => {
+                const video = event.currentTarget
+                setPlayback(video.ended ? 'ended' : video.paused ? 'paused' : 'playing')
+              }}
               onError={() => {
                 setReady(false)
-                setIsPlaying(false)
+                setPlayback('ready')
                 setError('이 영상을 불러올 수 없습니다. 다른 영상 파일을 선택해 주세요.')
               }}
             />
@@ -114,7 +125,7 @@ export default function IntroPreviewPage() {
           )}
           <div className="flex items-center gap-[20px]">
             <VideoControl
-              isPlaying={isPlaying}
+              isPlaying={playback === 'playing'}
               disabled={!ready}
               aria-controls={source ? videoId : undefined}
               onClick={() => void togglePlayback()}
@@ -126,9 +137,7 @@ export default function IntroPreviewPage() {
                   ? '선택한 영상 없음'
                   : !ready
                     ? '영상을 준비하는 중'
-                    : isPlaying
-                      ? '재생 중'
-                      : '일시정지'}
+                    : playbackLabels[playback]}
             </p>
           </div>
         </div>
