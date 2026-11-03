@@ -169,7 +169,7 @@ const SignupPage = ({
                   <SocialLoginButton name={'x'} />
                 </div>
               </div>
-              <AuthActionText message="이미 계정이 있으신가요?" linkText="로그인" href="" />
+              <AuthActionText message="이미 계정이 있으신가요?" linkText="로그인" href="/login" />
             </>
           )}
 
