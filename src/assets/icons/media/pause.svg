@@ -1,0 +1,14 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+<foreignObject x="-30" y="-30" width="120" height="120"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(15px);clip-path:url(#bgblur_0_0_14_clip_path);height:100%;width:100%"></div></foreignObject><g id="Media/VideoControl" data-figma-bg-blur-radius="30">
+<rect width="60" height="60" rx="30" fill="white" fill-opacity="0.4"/>
+<foreignObject x="-10" y="-10.5" width="80" height="81"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(15px);clip-path:url(#bgblur_1_0_14_clip_path);height:100%;width:100%"></div></foreignObject><g id="Rectangle 1" data-figma-bg-blur-radius="30">
+<path d="M39 19.5C39.5523 19.5 40 19.9477 40 20.5V39.5C40 40.0523 39.5523 40.5 39 40.5H35H33.5C32.9477 40.5 32.5 40.0523 32.5 39.5V20.5C32.5 19.9477 32.9477 19.5 33.5 19.5H35H39Z" fill="white" fill-opacity="0.6"/>
+<path d="M21 40.5C20.4477 40.5 20 40.0523 20 39.5V20.5C20 19.9477 20.4477 19.5 21 19.5H25H26.5C27.0523 19.5 27.5 19.9477 27.5 20.5V39.5C27.5 40.0523 27.0523 40.5 26.5 40.5H25H21Z" fill="white" fill-opacity="0.6"/>
+</g>
+</g>
+<defs>
+<clipPath id="bgblur_0_0_14_clip_path" transform="translate(30 30)"><rect width="60" height="60" rx="30"/>
+</clipPath><clipPath id="bgblur_1_0_14_clip_path" transform="translate(10 10.5)"><path d="M39 19.5C39.5523 19.5 40 19.9477 40 20.5V39.5C40 40.0523 39.5523 40.5 39 40.5H35H33.5C32.9477 40.5 32.5 40.0523 32.5 39.5V20.5C32.5 19.9477 32.9477 19.5 33.5 19.5H35H39Z"/>
+<path d="M21 40.5C20.4477 40.5 20 40.0523 20 39.5V20.5C20 19.9477 20.4477 19.5 21 19.5H25H26.5C27.0523 19.5 27.5 19.9477 27.5 20.5V39.5C27.5 40.0523 27.0523 40.5 26.5 40.5H25H21Z"/>
+</clipPath></defs>
+</svg>
