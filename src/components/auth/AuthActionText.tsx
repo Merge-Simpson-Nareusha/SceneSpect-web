@@ -1,3 +1,5 @@
+import { Link } from 'react-router'
+
 // 인증 화면에서 안내 문구와 액션을 한 줄로 보여주는 공통 컴포넌트입니다.
 // - 예: "이미 계정이 있으신가요? 로그인", "아직 계정이 없으신가요? 회원가입"
 // - 예: "인증 메일이 오지 않았나요? 재전송"
@@ -24,9 +26,9 @@ function AuthActionText({
     <p className={`text-center text-[clamp(0.75rem,1.11cqw,1rem)] ${isRegular ? '' : 'font-semibold'}`}>
       <span className={`text-[#B0B0B0] ${isRegular ? '' : 'font-semibold'}`}>{message}</span>{' '}
       {href !== undefined ? (
-        <a href={href} className={`text-[#2563EB] ${isRegular ? 'font-medium' : 'font-semibold'}`}>
+        <Link to={href} className={`text-[#2563EB] ${isRegular ? 'font-medium' : 'font-semibold'}`}>
           {linkText}
-        </a>
+        </Link>
       ) : (
         <button
           type="button"
