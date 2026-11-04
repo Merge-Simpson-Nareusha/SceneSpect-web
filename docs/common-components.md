@@ -74,7 +74,7 @@ import NavigationHeader from './components/layout/NavigationHeader'
 ```
 
 예시 경로와 콜백은 페이지 담당자가 실제 라우팅·인증 처리에 연결해야 합니다.
-공통 버튼은 `children` 문구가 필수이며 로그인 문구를 기본값으로 넣지 않습니다.
+공통 버튼은 `children` 문구가 필수이며 로그인 문구를 기본값으로 넣지 않습니다. 비활성 버튼은 클릭과 Hover 색상 변경을 막습니다.
 계정 버튼의 이름·이메일·프로필/설정 경로·로그아웃 콜백도 필수입니다. 예시 데이터는 `src/dev/`에서만 전달합니다.
 헤더는 `homeHref`, `links`, `auth`를 필수로 받고, `guest`이면 `loginHref`, `signedIn`이면 계정 정보와 동작이 필수입니다.
 `previewState="hover"`는 미리보기에서 Hover 색상을 고정하기 위한 옵션입니다.
@@ -102,4 +102,5 @@ npm run lint
 
 미리보기에서 로고 3종, 버튼 4종의 기본·Hover 상태, 로그인 전후 헤더,
 계정 Open·Escape·바깥 클릭·Tab 닫기, 긴 이름과 공백 이름을 확인할 수 있습니다.
+비활성 버튼 예시와 키보드 포커스 확인 영역에서는 비활성 버튼을 Tab이 건너뛰는지도 확인합니다.
 목업용 Mac 메뉴바는 실제 웹 UI가 아니라는 Figma 설명에 따라 별도 미리보기로 제한합니다.

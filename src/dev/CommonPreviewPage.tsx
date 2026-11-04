@@ -133,7 +133,7 @@ export default function CommonPreviewPage() {
             {originalSizes
               ? 'Figma 기준 크기 (배치는 실사용 기준)'
               : '실사용 크기 · 일반 16px / CTA 20px'}{' '}
-            · 오른쪽은 Hover 상태 고정 예시입니다.
+            · 각 행은 Default / Hover 고정 / Disabled 순서입니다.
           </p>
           <div className="mt-[32px] space-y-[32px]">
             {variants.map((variant) => (
@@ -155,9 +155,45 @@ export default function CommonPreviewPage() {
                   >
                     {variant.startsWith('cta') ? '로그인 하러가기' : '로그인'}
                   </CommonButton>
+                  <CommonButton
+                    variant={variant}
+                    size={originalSizes ? 'design' : 'default'}
+                    disabled
+                    aria-label={`${variant} 비활성 예시`}
+                    onClick={() => action('비활성 버튼은 실행되면 안 됩니다')}
+                  >
+                    {variant.startsWith('cta') ? '로그인 하러가기' : '로그인'}
+                  </CommonButton>
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+        <section
+          aria-labelledby="keyboard-heading"
+          className="rounded-[12px] border border-slate-200 bg-white p-[32px]"
+        >
+          <h2 id="keyboard-heading" className="text-[20px] font-semibold">
+            키보드 포커스 확인
+          </h2>
+          <p className="mt-[8px] text-[14px] text-[#737b88]">
+            시작점 링크에서 Tab으로 이동하면 파란 포커스 테두리가 표시됩니다. 비활성 버튼은
+            건너뛰며, Shift+Tab으로 이전 항목으로 돌아갑니다. Enter·Space로 버튼을 실행합니다.
+          </p>
+          <div className="mt-[24px] flex flex-wrap items-center gap-[24px]">
+            <a
+              href="#keyboard-focus-button"
+              className="text-[#2962ff] underline underline-offset-4"
+            >
+              키보드 확인 시작점
+            </a>
+            <CommonButton id="keyboard-focus-button" onClick={() => action('포커스 확인')}>
+              포커스 확인
+            </CommonButton>
+            <CommonButton disabled>비활성 · Tab 건너뜀</CommonButton>
+            <CommonButton variant="compactDark" onClick={() => action('다음 버튼')}>
+              다음 버튼
+            </CommonButton>
           </div>
         </section>
         <section
