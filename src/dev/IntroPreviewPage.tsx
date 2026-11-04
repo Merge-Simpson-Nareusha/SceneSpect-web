@@ -150,6 +150,12 @@ export default function IntroPreviewPage() {
       <a href="?preview=common" className="text-[14px] text-[#2962ff] underline underline-offset-4">
         00 공통 컴포넌트 보기
       </a>
+      <a
+        href="?preview=team"
+        className="ml-[24px] text-[14px] text-[#2962ff] underline underline-offset-4"
+      >
+        03 팀 관리 컴포넌트 보기
+      </a>
     </main>
   )
 }

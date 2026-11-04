@@ -105,6 +105,9 @@ export default function CommonPreviewPage() {
           <a href="?preview=intro" className="text-[#2962ff] underline underline-offset-4">
             01 소개 컴포넌트 보기
           </a>
+          <a href="?preview=team" className="text-[#2962ff] underline underline-offset-4">
+            03 팀 관리 컴포넌트 보기
+          </a>
         </section>
         <section
           aria-labelledby="logo-heading"
