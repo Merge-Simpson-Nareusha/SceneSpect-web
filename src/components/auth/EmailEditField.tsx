@@ -1,25 +1,25 @@
-import { useState } from 'react'
-
 // 회원가입 단계 사이에서 이메일을 표시하고 수정하는 컴포넌트입니다.
 // - value: 현재 이메일 주소를 표시하고 입력값으로 사용합니다.
 // - onChange: 수정된 이메일 주소를 부모 컴포넌트에 전달합니다.
-// - 수정 버튼을 누르면 제목 없는 입력칸으로 전환되고, 유효한 이메일일 때 완료할 수 있습니다.
+// - 수정/완료 동작은 회원가입 단계에 따라 부모 컴포넌트에서 제어합니다.
 type EmailEditFieldProps = {
   value: string
   onChange: (value: string) => void
+  isEditing: boolean
+  onEdit: () => void
+  onDone: () => void
 }
 
-function EmailEditField({ value, onChange }: EmailEditFieldProps) {
-  const [isEditing, setIsEditing] = useState(false)
+function EmailEditField({ value, onChange, isEditing, onEdit, onDone }: EmailEditFieldProps) {
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
 
   const handleEdit = () => {
     if (!isEditing) {
-      setIsEditing(true)
+      onEdit()
       return
     }
 
-    if (isEmailValid) setIsEditing(false)
+    if (isEmailValid) onDone()
   }
 
   return (

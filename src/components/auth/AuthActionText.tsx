@@ -9,6 +9,7 @@ type FormPromptProps = {
   href?: string
   onClick?: () => void
   variant?: 'emphasis' | 'regular'
+  disabled?: boolean
 }
 
 function AuthActionText({
@@ -17,6 +18,7 @@ function AuthActionText({
   href,
   onClick,
   variant = 'emphasis',
+  disabled = false,
 }: FormPromptProps) {
   const isRegular = variant === 'regular'
 
@@ -31,7 +33,8 @@ function AuthActionText({
         <button
           type="button"
           onClick={onClick}
-          className={`cursor-pointer text-[#2563EB] ${isRegular ? 'font-medium' : 'font-semibold'}`}
+          disabled={disabled}
+          className={`${disabled ? 'cursor-not-allowed text-[#B0B0B0]' : 'cursor-pointer text-[#2563EB]'} ${isRegular ? 'font-medium' : 'font-semibold'}`}
         >
           {linkText}
         </button>

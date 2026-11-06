@@ -1,98 +1,105 @@
-/**
- * 인증 관련 서버 통신 코드를 작성하는 파일입니다.
- * 화면 컴포넌트(UI) 코드는 이 파일에 넣지 않습니다.
- *
- * 여기에 작성할 내용:
- * 1. 로그인, 회원가입, 이메일 인증 등 각 API의 요청 데이터 타입
- *    - 예: 이메일/비밀번호, 인증번호
- * 2. 서버가 돌려주는 응답 데이터 타입
- *    - 예: 사용자 정보, 성공 여부, 액세스 토큰
- * 3. 서버 API를 호출하는 함수
- *    - 예: 로그인, 회원가입, 인증번호 발송 및 확인
- * 4. 공통 요청 처리
- *    - API 기본 주소, JSON 변환, 실패 응답/네트워크 오류 처리
- *
- * 백엔드 API 주소와 경로, 요청·응답 형식이 정해지면 그 규격에 맞춰 구현하세요.
- * 비밀 키나 서버 비밀번호는 프론트엔드 코드에 저장하지 마세요.
- */
-
-// ====== 이전 코드 =======
-
-// type SignupStartResponse = {
-//   signupSessionId: string
-// }
-
-// export async function startSignup(email: string): Promise<SignupStartResponse> {
-//   // if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCK_AUTH === 'true') {
-//   //   return { signupSessionId: 'mock-session-id' }
-//   // }
-//   // const startedAt = performance.now()
-//   // console.log(`${(performance.now() - startedAt).toFixed(2)}ms`)
-//   const response = await fetch('/api/v1/auth/signup/start', {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json',
-//     },
-//     body: JSON.stringify({ email }),
-//   })
-//   //여기 더미데이터 넣어서 오는데 시간 측정
-//   // console.log(`${(performance.now() - startedAt).toFixed(2)}ms`)
-//   const data: unknown = await response.json().catch(() => null)
-
-//   if (!response.ok) {
-//     if (response.status === 409) {
-//       throw new Error('이미 가입된 이메일입니다.')
-//     }
-
-//     throw new Error('회원가입을 시작하지 못했습니다.')
-//   }
-
-//   if (
-//     typeof data !== 'object' ||
-//     data === null ||
-//     !('signupSessionId' in data) ||
-//     typeof data.signupSessionId !== 'string'
-//   ) {
-//     throw new Error('서버 응답에서 가입 세션 ID를 찾지 못했습니다.')
-//   }
-
-//   // console.log(`${(performance.now() - startedAt).toFixed(2)}ms`)
-
-//   return { signupSessionId: data.signupSessionId }
-// }
-// //아래 시간측정
-// //걸리는 시간 문제 보고 문제없으면 리액트 불러오는데 문제
-
-// ====== axios 적용 =======
-
 import axios from 'axios'
 
+// 모든 인증 요청은 같은 Axios 설정을 사용합니다.
+// 개발 환경에서는 Vite가 /api 요청을 백엔드 주소로 전달합니다.
 const api = axios.create({
   baseURL: '/api',
+  withCredentials: true,
 })
 
 type SignupStartResponse = {
   signupSessionId: string
 }
 
-export async function startSignup(
-  email: string,
-): Promise<SignupStartResponse> {
+export type SignupTerm = {
+  id: string
+  code: string
+  version: string
+  title: string
+  content: string
+  required: boolean
+}
+
+type SignupTermsResponse = {
+  terms: SignupTerm[]
+}
+
+type SignupPasswordInput = {
+  signupSessionId: string
+  password: string
+  passwordConfirmation: string
+}
+
+type SignupPasswordResponse = {
+  next: 'email_verification'
+}
+
+type SignupEmailSendResponse = {
+  expiresIn: number
+  resendAfter: number
+}
+
+type SignupEmailVerifyResponse = {
+  verified: boolean
+  next: 'terms'
+}
+
+type SignupConsent = {
+  termId: string
+  accepted: boolean
+}
+
+type SignupCompleteResponse = {
+  accessToken: string
+  tokenType: 'Bearer'
+  expiresIn: number
+  user: {
+    id: string
+    email: string
+    username: string
+    nickname: string
+    avatarUrl: string
+    displayTheme: string
+    role: string
+    status: string
+    emailVerified: boolean
+    createdAt: string
+  }
+}
+
+// 서버가 보내준 오류 문구가 있으면 화면에서 사용할 수 있도록 꺼냅니다.
+function getServerErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError(error)) {
+    const responseData: unknown = error.response?.data
+
+    if (
+      typeof responseData === 'object' &&
+      responseData !== null &&
+      'error' in responseData &&
+      typeof responseData.error === 'string'
+    ) {
+      return responseData.error
+    }
+  }
+
+  return fallback
+}
+
+// 이메일로 가입 세션을 시작합니다. 이메일을 수정한 경우 새 세션을 발급받는 데도 사용합니다.
+export async function startSignup(email: string): Promise<SignupStartResponse> {
   let data: unknown
 
   try {
-    const response = await api.post<unknown>(
-      '/v1/auth/signup/start',
-      { email },
-    )
-
+    const response = await api.post<unknown>('/v1/auth/signup/start', { email })
     data = response.data
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 409) {
       throw new Error('이미 가입된 이메일입니다.', { cause: error })
     }
 
-    throw new Error('회원가입을 시작하지 못했습니다.', { cause: error })
+    throw new Error(getServerErrorMessage(error, '회원가입을 시작하지 못했습니다.'), {
+      cause: error,
+    })
   }
 
   if (
@@ -105,4 +112,119 @@ export async function startSignup(
   }
 
   return { signupSessionId: data.signupSessionId }
+}
+
+// 가입 세션에 비밀번호를 저장하고 이메일 인증 단계로 진행합니다.
+export async function setSignupPassword(
+  input: SignupPasswordInput,
+): Promise<SignupPasswordResponse> {
+  try {
+    const response = await api.post<SignupPasswordResponse>('/v1/auth/signup/password', input)
+
+    return response.data
+  } catch (error) {
+    throw new Error(
+      getServerErrorMessage(error, '비밀번호를 저장하지 못했습니다. 다시 시도해 주세요.'),
+      { cause: error },
+    )
+  }
+}
+
+// 현재 가입에 적용할 약관 목록과 서버 발급 ID를 가져옵니다.
+export async function getSignupTerms(): Promise<SignupTermsResponse> {
+  try {
+    const response = await api.get<unknown>('/v1/auth/signup/terms')
+    const data = response.data
+
+    if (
+      typeof data !== 'object' ||
+      data === null ||
+      !('terms' in data) ||
+      !Array.isArray(data.terms) ||
+      !data.terms.every(
+        (term) =>
+          typeof term === 'object' &&
+          term !== null &&
+          'id' in term &&
+          typeof term.id === 'string' &&
+          'code' in term &&
+          typeof term.code === 'string' &&
+          'version' in term &&
+          typeof term.version === 'string' &&
+          'title' in term &&
+          typeof term.title === 'string' &&
+          'content' in term &&
+          typeof term.content === 'string' &&
+          'required' in term &&
+          typeof term.required === 'boolean',
+      )
+    ) {
+      throw new Error('서버 약관 응답 형식이 올바르지 않습니다.')
+    }
+
+    if (data.terms.length === 0) {
+      throw new Error('현재 가입에 필요한 약관이 없습니다.')
+    }
+
+    return { terms: data.terms as SignupTerm[] }
+  } catch (error) {
+    if (error instanceof Error && !axios.isAxiosError(error)) throw error
+
+    throw new Error(getServerErrorMessage(error, '약관 목록을 불러오지 못했습니다.'), {
+      cause: error,
+    })
+  }
+}
+
+// 가입 세션으로 인증 메일을 발송합니다.
+export async function sendSignupVerificationCode(
+  signupSessionId: string,
+): Promise<SignupEmailSendResponse> {
+  try {
+    const response = await api.post<SignupEmailSendResponse>(
+      '/v1/auth/signup/email/send',
+      { signupSessionId },
+    )
+    return response.data
+  } catch (error) {
+    throw new Error(getServerErrorMessage(error, '인증 메일을 보내지 못했습니다.'), {
+      cause: error,
+    })
+  }
+}
+
+// 사용자가 입력한 인증 코드를 확인하고 약관 단계로 진행합니다.
+export async function verifySignupEmail(
+  signupSessionId: string,
+  code: string,
+): Promise<SignupEmailVerifyResponse> {
+  try {
+    const response = await api.post<SignupEmailVerifyResponse>(
+      '/v1/auth/signup/email/verify',
+      { signupSessionId, code },
+    )
+    return response.data
+  } catch (error) {
+    throw new Error(getServerErrorMessage(error, '인증 코드를 확인하지 못했습니다.'), {
+      cause: error,
+    })
+  }
+}
+
+// 선택 상태와 서버가 발급한 약관 ID를 보내 최종 가입을 완료합니다.
+export async function completeSignup(
+  signupSessionId: string,
+  consents: SignupConsent[],
+): Promise<SignupCompleteResponse> {
+  try {
+    const response = await api.post<SignupCompleteResponse>('/v1/auth/signup/terms', {
+      signupSessionId,
+      consents,
+    })
+    return response.data
+  } catch (error) {
+    throw new Error(getServerErrorMessage(error, '회원가입을 완료하지 못했습니다.'), {
+      cause: error,
+    })
+  }
 }
