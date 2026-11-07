@@ -71,6 +71,17 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
   const [resendCountdown, setResendCountdown] = useState(0)
   const [signupTerms, setSignupTerms] = useState<SignupTerm[]>([])
   const [agreements, setAgreements] = useState<Record<string, boolean>>({})
+  // 필수 약관을 먼저 보여주고, 선택 약관 중 마케팅 동의는 마지막에 배치합니다.
+  const orderedSignupTerms = [...signupTerms].sort((left, right) => {
+    if (left.required !== right.required) return left.required ? -1 : 1
+
+    const leftIsMarketing =
+      left.code.toLowerCase().includes('marketing') || left.title.includes('마케팅')
+    const rightIsMarketing =
+      right.code.toLowerCase().includes('marketing') || right.title.includes('마케팅')
+
+    return Number(leftIsMarketing) - Number(rightIsMarketing)
+  })
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
 
   // 서버가 재발송을 허용하기까지 남은 시간을 초 단위로 표시합니다.
@@ -452,7 +463,7 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
                 />
                 <div className="border-y border-[#ECECEC] py-[clamp(0.5rem,1.11cqw,1rem)]">
                   <div className="flex flex-col gap-[1.6875rem]">
-                    {signupTerms.map((term) => (
+                    {orderedSignupTerms.map((term) => (
                       <TermsAgreement
                         key={term.id}
                         variant="default"
