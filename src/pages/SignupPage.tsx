@@ -17,6 +17,7 @@ import completionIcon from '../assets/icons/signup/signup-complete.svg'
 import scenespectLogoFull from '../assets/logos/scenespect-logo-full.svg'
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 
 type SignupError = 'invalidCredentials' | 'alreadyRegistered'
 
@@ -44,6 +45,7 @@ const SignupPage = ({
   verifyVerificationCode,
   resendVerificationCode,
 }: SignupPageProps) => {
+  const navigate = useNavigate()
   const selectedError = error ? errorMessages[error] : null
   const [currentStep, setCurrentStep] = useState(1)
   const [email, setEmail] = useState('')
@@ -318,7 +320,7 @@ const SignupPage = ({
                   이제 영상 분석을 시작해보세요.
                 </p>
               </div>
-              <Button>메인으로 가기</Button>
+              <Button onClick={() => navigate('/teams', { replace: true })}>메인으로 가기</Button>
             </div>
           )}
         </div>

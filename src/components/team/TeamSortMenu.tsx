@@ -22,7 +22,7 @@ export default function TeamSortMenu({
       ref={ref}
       role="menu"
       aria-label="팀 정렬 기준"
-      className={`flex w-[300px] max-w-[calc(100vw-48px)] flex-col gap-[10px] rounded-[16px] border border-[#e2e6ec] bg-white p-[6px] ${className}`}
+      className={`flex w-[240px] max-w-[calc(100vw-32px)] flex-col gap-[4px] rounded-[12px] border border-[#e2e6ec] bg-white p-[4px] ${className}`}
       onKeyDown={(event) => {
         props.onKeyDown?.(event)
         if (event.defaultPrevented) return

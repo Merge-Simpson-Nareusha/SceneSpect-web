@@ -60,7 +60,7 @@ export default function TeamSortButton({ value, onChange }: TeamSortButtonProps)
             setOpen(true)
           }
         }}
-        className={`flex h-[50px] min-w-[99px] cursor-pointer items-center justify-center gap-[8px] rounded-[8px] border border-[#e3e6eb] bg-white px-[20px] text-[19px] leading-[normal] font-medium tracking-[-0.04em] text-[#16181d] hover:border-[#d5d9e0] hover:bg-[#f6f7f9] ${commonStyles.focus}`}
+        className={`flex h-[44px] min-w-[88px] cursor-pointer items-center justify-center gap-[6px] rounded-[8px] border border-[#e3e6eb] bg-white px-[16px] text-[16px] leading-[normal] font-medium tracking-[-0.04em] text-[#16181d] hover:border-[#d5d9e0] hover:bg-[#f6f7f9] ${commonStyles.focus}`}
       >
         정렬
         <span
@@ -75,7 +75,7 @@ export default function TeamSortButton({ value, onChange }: TeamSortButtonProps)
           ref={menuRef}
           id={menuId}
           value={value}
-          className="absolute top-[calc(100%+18px)] left-1/2 z-30 -translate-x-1/2"
+          className="absolute top-[calc(100%+8px)] left-1/2 z-30 -translate-x-1/2"
           onChange={(next) => {
             onChange(next)
             setOpen(false)

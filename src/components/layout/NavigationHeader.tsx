@@ -20,29 +20,32 @@ export type NavigationHeaderProps = HeaderAuthProps & {
   homeHref: string
   links: { label: string; href: string }[]
   activeHref?: string
+  sticky?: boolean
 }
 
 /** 데스크톱 공통 헤더. API 대신 props로 사용자 정보와 동작을 전달합니다. */
 export default function NavigationHeader(props: NavigationHeaderProps) {
-  const { homeHref, links, activeHref } = props
+  const { homeHref, links, activeHref, sticky = false } = props
   const focusClasses = commonStyles.focus
   const accountState =
     props.auth === 'signedIn' && props.accountOpen !== undefined
       ? { open: props.accountOpen, onOpenChange: props.onAccountOpenChange }
       : {}
   return (
-    <header className="relative z-10 w-full bg-white/80 text-[#16181d] backdrop-blur-[20px]">
-      <div className="mx-auto grid h-[80px] max-w-[1512px] grid-cols-[minmax(164px,1fr)_auto_minmax(164px,1fr)] items-center gap-x-[24px] px-[clamp(24px,3.97vw,60px)] py-[12px]">
+    <header
+      className={`${sticky ? 'sticky top-0 z-50' : 'relative z-10'} w-full bg-white/80 text-[#16181d] backdrop-blur-[20px]`}
+    >
+      <div className="mx-auto grid h-[80px] max-w-[1512px] grid-cols-[minmax(0,1fr)_minmax(0,160px)] items-center gap-x-[16px] px-5 py-[12px] lg:grid-cols-[minmax(164px,1fr)_auto_minmax(164px,1fr)] lg:gap-x-[24px] lg:px-[clamp(24px,3.97vw,60px)]">
         <a
           href={homeHref}
           aria-label="SceneSpect 홈"
           className={`flex min-h-[44px] w-fit items-center ${commonStyles.controlRadius} ${focusClasses}`}
         >
-          <BrandLogo width={164} decorative />
+          <BrandLogo width={164} decorative className="max-lg:w-[clamp(104px,22vw,164px)]" />
         </a>
         <nav
           aria-label="주 메뉴"
-          className="flex items-center gap-[clamp(24px,2.12vw,32px)] text-[16px] leading-[24px] tracking-[-0.32px]"
+          className="hidden items-center gap-[clamp(24px,2.12vw,32px)] text-[16px] leading-[24px] tracking-[-0.32px] lg:flex"
         >
           {links.map(({ label, href }) => (
             <a
