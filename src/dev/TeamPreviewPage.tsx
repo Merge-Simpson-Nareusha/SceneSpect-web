@@ -103,6 +103,7 @@ export default function TeamPreviewPage() {
         >
           <a href="?preview=common">00 공통 보기</a>
           <a href="?preview=intro">01 소개 보기</a>
+          <a href="?preview=project">04 프로젝트 보기</a>
         </nav>
       </header>
       <section aria-label="팀 목록 헤더와 카드">
