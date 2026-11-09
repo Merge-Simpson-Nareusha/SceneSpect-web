@@ -11,6 +11,11 @@ type SignupStartResponse = {
   signupSessionId: string
 }
 
+type SignupEmailUpdateResponse = {
+  signupSessionId: string
+  email: string
+}
+
 export type SignupTerm = {
   id: string
   code: string
@@ -112,6 +117,39 @@ export async function startSignup(email: string): Promise<SignupStartResponse> {
   }
 
   return { signupSessionId: data.signupSessionId }
+}
+
+// 비밀번호 설정 단계에서 기존 가입 세션의 이메일을 수정합니다.
+export async function updateSignupEmail(
+  signupSessionId: string,
+  email: string,
+): Promise<SignupEmailUpdateResponse> {
+  let data: unknown
+
+  try {
+    const response = await api.patch<unknown>('/v1/auth/signup/email', {
+      signupSessionId,
+      email,
+    })
+    data = response.data
+  } catch (error) {
+    throw new Error(getServerErrorMessage(error, '이메일을 수정하지 못했습니다.'), {
+      cause: error,
+    })
+  }
+
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    !('signupSessionId' in data) ||
+    typeof data.signupSessionId !== 'string' ||
+    !('email' in data) ||
+    typeof data.email !== 'string'
+  ) {
+    throw new Error('서버 응답에서 수정된 이메일 정보를 확인하지 못했습니다.')
+  }
+
+  return { signupSessionId: data.signupSessionId, email: data.email }
 }
 
 // 가입 세션에 비밀번호를 저장하고 이메일 인증 단계로 진행합니다.

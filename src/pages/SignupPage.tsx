@@ -9,6 +9,7 @@ import {
   sendSignupVerificationCode,
   setSignupPassword,
   startSignup,
+  updateSignupEmail,
   verifySignupEmail,
   type SignupTerm,
 } from '../services/auth'
@@ -130,13 +131,13 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
       const normalizedEmail = email.trim()
       let activeSignupSessionId = signupSessionId
 
-      // 이메일을 바꾸지 않았다면 기존 세션을 사용합니다.
-      // 바뀌었다면 첫 단계와 같은 API로 새 이메일 세션을 만든 뒤 비밀번호를 저장합니다.
+      // 이메일을 바꾸지 않았다면 기존 세션을 사용하고, 바뀌었다면 해당 세션의 이메일을 먼저 수정합니다.
       if (normalizedEmail !== signupSessionEmail) {
-        const result = await startSignup(normalizedEmail)
+        const result = await updateSignupEmail(signupSessionId, normalizedEmail)
         activeSignupSessionId = result.signupSessionId
         setSignupSessionId(activeSignupSessionId)
-        setSignupSessionEmail(normalizedEmail)
+        setSignupSessionEmail(result.email)
+        setEmail(result.email)
       }
 
       await setSignupPassword({
