@@ -31,7 +31,6 @@ import { useNavigate } from 'react-router'
 import type { AuthUser } from '../services/auth'
 import { getApiErrorMessage } from '../services/api'
 import {
-  checkTeamNameAvailability,
   createTeam as createTeamRequest,
   getTeams,
 } from '../services/teams'
@@ -307,11 +306,6 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
       const alreadyCreated = teams.some((team) => team.name === teamName)
 
       if (!alreadyCreated) {
-        const availability = await checkTeamNameAvailability(teamName)
-        if (!availability.available) {
-          throw new Error('기본 팀 이름을 사용할 수 없습니다. 팀 목록에서 직접 만들어 주세요.')
-        }
-
         const { team } = await createTeamRequest({ name: teamName, description: '' })
         if (team.joinCode) {
           sessionStorage.setItem(`scenespect.team.${team.id}.joinCode`, team.joinCode)

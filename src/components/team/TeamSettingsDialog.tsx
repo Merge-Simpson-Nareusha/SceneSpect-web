@@ -416,6 +416,11 @@ function SettingsContent({
               <div className="flex items-center justify-between gap-[20px] px-[10px] max-sm:flex-col max-sm:items-stretch max-sm:gap-3 max-sm:px-0">
                 <h3 className="flex gap-[8px] text-[20px] leading-[normal] font-semibold tracking-[-0.04em] text-black">
                   팀 멤버<span className="text-[16px] text-[#6b7280]">{members.length}명</span>
+                  {joinRequests.length > 0 && (
+                    <span className="rounded-full bg-[#eaf1ff] px-2 py-0.5 text-[12px] font-medium text-[#2563eb]">
+                      새로운 팀원 {joinRequests.length}
+                    </span>
+                  )}
                 </h3>
                 <TeamCreateButton
                   icon="invite"
@@ -440,50 +445,44 @@ function SettingsContent({
                     />
                   </li>
                 ))}
-                {members.length === 0 && (
+                {joinRequests.map((request) => (
+                  <li
+                    key={`request-${request.id}`}
+                    className="flex min-h-[56px] items-center justify-between gap-3 max-sm:flex-wrap"
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#eaf1ff] text-[16px] font-semibold text-[#2563eb] max-sm:size-8 max-sm:text-[14px]">
+                        {request.nickname.slice(0, 1)}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-[15px] font-medium">{request.nickname}</p>
+                        <p className="text-[12px] text-[#6b7280]">새로운 팀원 · 가입 신청</p>
+                      </div>
+                    </div>
+                    <div className="ml-auto flex shrink-0 gap-2">
+                      <button
+                        type="button"
+                        disabled={saving || !onReviewJoinRequest}
+                        onClick={() => void onReviewJoinRequest?.(request.id, true)}
+                        className={`h-9 cursor-pointer rounded-[6px] bg-[#2563eb] px-3 text-[13px] font-medium text-white hover:bg-[#1d4ed8] disabled:cursor-wait disabled:opacity-50 ${commonStyles.focus}`}
+                      >
+                        승인
+                      </button>
+                      <button
+                        type="button"
+                        disabled={saving || !onReviewJoinRequest}
+                        onClick={() => void onReviewJoinRequest?.(request.id, false)}
+                        className={`h-9 cursor-pointer rounded-[6px] border border-[#e3e6eb] bg-white px-3 text-[13px] font-medium text-[#6b7280] hover:bg-[#f6f7f9] disabled:cursor-wait disabled:opacity-50 ${commonStyles.focus}`}
+                      >
+                        거부
+                      </button>
+                    </div>
+                  </li>
+                ))}
+                {members.length === 0 && joinRequests.length === 0 && (
                   <li className="text-[16px] text-[#6b7280]">아직 등록된 팀 멤버가 없습니다.</li>
                 )}
               </ul>
-              {joinRequests.length > 0 && (
-                <section aria-label="팀 가입 신청" className="flex flex-col gap-3 px-[10px] max-sm:px-0">
-                  <h4 className="text-[18px] font-semibold">
-                    가입 신청 <span className="text-[14px] text-[#6b7280]">{joinRequests.length}명</span>
-                  </h4>
-                  <ul className="flex flex-col gap-2">
-                    {joinRequests.map((request) => (
-                      <li
-                        key={request.id}
-                        className="flex items-center justify-between gap-3 rounded-[8px] bg-[#f7f8fa] px-4 py-3 max-sm:flex-wrap"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-[15px] font-medium">{request.nickname}</p>
-                          <p className="text-[12px] text-[#6b7280]">
-                            {new Date(request.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="flex shrink-0 gap-2">
-                          <button
-                            type="button"
-                            disabled={saving || !onReviewJoinRequest}
-                            onClick={() => void onReviewJoinRequest?.(request.id, true)}
-                            className={`h-9 cursor-pointer rounded-[6px] bg-[#2563eb] px-3 text-[13px] font-medium text-white hover:bg-[#1d4ed8] disabled:cursor-wait disabled:opacity-50 ${commonStyles.focus}`}
-                          >
-                            승인
-                          </button>
-                          <button
-                            type="button"
-                            disabled={saving || !onReviewJoinRequest}
-                            onClick={() => void onReviewJoinRequest?.(request.id, false)}
-                            className={`h-9 cursor-pointer rounded-[6px] border border-[#e3e6eb] bg-white px-3 text-[13px] font-medium text-[#6b7280] hover:bg-[#f6f7f9] disabled:cursor-wait disabled:opacity-50 ${commonStyles.focus}`}
-                          >
-                            거절
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
               <Divider />
               <button
                 type="button"

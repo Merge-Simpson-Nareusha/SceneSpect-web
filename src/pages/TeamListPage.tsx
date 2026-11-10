@@ -17,7 +17,6 @@ import { ApiError, getApiErrorMessage } from '../services/api'
 import { getCachedUser, getCurrentUser, logout, type AuthUser } from '../services/auth'
 import {
   addTeamMemberWarning,
-  checkTeamNameAvailability,
   createTeam as createTeamRequest,
   deleteTeam as deleteTeamRequest,
   getTeam as getTeamRequest,
@@ -88,6 +87,12 @@ function mapApiJoinRequest(request: ApiTeamJoinRequest): TeamJoinRequest {
   }
 }
 
+function mapPendingJoinRequests(requests: ApiTeamJoinRequest[]): TeamJoinRequest[] {
+  return requests
+    .filter((request) => request.status.toUpperCase() === 'PENDING')
+    .map(mapApiJoinRequest)
+}
+
 function mapApiTeam(team: ApiTeam, index: number, previous?: TeamPreview): TeamPreview {
   return {
     id: team.id,
@@ -147,6 +152,7 @@ export default function TeamListPage() {
   const [settingsError, setSettingsError] = useState('')
   const [settingsMessage, setSettingsMessage] = useState('')
   const [inviteTarget, setInviteTarget] = useState<TeamInviteTarget | null>(null)
+  const [pendingJoinTeamIds, setPendingJoinTeamIds] = useState<string[]>([])
   const [notice, setNotice] = useState('')
 
   const accountName = user?.nickname || navigationAccountName
@@ -193,6 +199,105 @@ export default function TeamListPage() {
     }
   }, [navigate, reloadCount])
 
+  useEffect(() => {
+    if (!settingsTeamId) return
+
+    let active = true
+    let fetching = false
+    const refreshJoinRequests = async () => {
+      if (fetching || document.visibilityState !== 'visible') return
+      fetching = true
+      try {
+        const response = await getTeamJoinRequests(settingsTeamId)
+        if (!active) return
+        const joinRequests = mapPendingJoinRequests(response.requests)
+        setTeams((current) =>
+          current.map((team) =>
+            team.id === settingsTeamId ? { ...team, joinRequests } : team,
+          ),
+        )
+      } catch (error) {
+        if (!active) return
+        if (error instanceof ApiError && error.status === 401) {
+          navigate('/login', { replace: true })
+          return
+        }
+        console.error('[API] 팀 가입 신청 목록을 새로고침하지 못했습니다.', error)
+      } finally {
+        fetching = false
+      }
+    }
+
+    const intervalId = window.setInterval(() => {
+      void refreshJoinRequests()
+    }, 3000)
+    window.addEventListener('focus', refreshJoinRequests)
+    document.addEventListener('visibilitychange', refreshJoinRequests)
+
+    return () => {
+      active = false
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', refreshJoinRequests)
+      document.removeEventListener('visibilitychange', refreshJoinRequests)
+    }
+  }, [navigate, settingsTeamId])
+
+  useEffect(() => {
+    if (pendingJoinTeamIds.length === 0) return
+
+    let active = true
+    let fetching = false
+    const refreshTeamsAfterApproval = async () => {
+      if (fetching || document.visibilityState !== 'visible') return
+      fetching = true
+      try {
+        const response = await getTeams()
+        if (!active) return
+
+        const visibleTeamIds = new Set(response.teams.map((team) => team.id))
+        const approvedTeamIds = pendingJoinTeamIds.filter((teamId) => visibleTeamIds.has(teamId))
+        setTeams((current) =>
+          response.teams.map((team, index) =>
+            mapApiTeam(
+              team,
+              index,
+              current.find((currentTeam) => currentTeam.id === team.id),
+            ),
+          ),
+        )
+
+        if (approvedTeamIds.length > 0) {
+          setPendingJoinTeamIds((current) =>
+            current.filter((teamId) => !approvedTeamIds.includes(teamId)),
+          )
+          setNotice('팀 참가 신청이 승인되어 팀 목록에 추가되었습니다.')
+        }
+      } catch (error) {
+        if (!active) return
+        if (error instanceof ApiError && error.status === 401) {
+          navigate('/login', { replace: true })
+          return
+        }
+        console.error('[API] 팀 참가 승인 상태를 확인하지 못했습니다.', error)
+      } finally {
+        fetching = false
+      }
+    }
+
+    const intervalId = window.setInterval(() => {
+      void refreshTeamsAfterApproval()
+    }, 3000)
+    window.addEventListener('focus', refreshTeamsAfterApproval)
+    document.addEventListener('visibilitychange', refreshTeamsAfterApproval)
+
+    return () => {
+      active = false
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', refreshTeamsAfterApproval)
+      document.removeEventListener('visibilitychange', refreshTeamsAfterApproval)
+    }
+  }, [navigate, pendingJoinTeamIds])
+
   const sortedTeams = useMemo(() => {
     return sortTeamList(teams, sort)
   }, [sort, teams])
@@ -229,7 +334,7 @@ export default function TeamListPage() {
             ? {
                 ...mapApiTeam(detailResponse.team, index, currentTeam),
                 members: membersResponse.members.map(mapApiMember),
-                joinRequests: joinRequestsResponse.requests.map(mapApiJoinRequest),
+                joinRequests: mapPendingJoinRequests(joinRequestsResponse.requests),
               }
             : currentTeam,
         ),
@@ -248,9 +353,6 @@ export default function TeamListPage() {
 
   const handleCreateTeam = async ({ name, description }: TeamCreateInput) => {
     try {
-      const availability = await checkTeamNameAvailability(name)
-      if (!availability.available) throw new Error('이미 사용 중인 팀 이름입니다.')
-
       const response = await createTeamRequest({ name, description })
       const createdTeam = mapApiTeam(response.team, 0)
       if (response.team.joinCode) {
@@ -272,7 +374,12 @@ export default function TeamListPage() {
     const nickname = user?.nickname || accountName
     if (!nickname) throw new Error('사용자 이름을 불러오지 못했습니다. 다시 로그인해 주세요.')
     try {
-      await joinTeamRequest(joinCode, nickname)
+      const response = await joinTeamRequest(joinCode, nickname)
+      setPendingJoinTeamIds((current) =>
+        current.includes(response.request.teamId)
+          ? current
+          : [...current, response.request.teamId],
+      )
       setNotice('팀 참가 요청을 보냈습니다. 팀장의 승인을 기다려 주세요.')
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
@@ -291,9 +398,6 @@ export default function TeamListPage() {
     setSettingsError('')
     setSettingsMessage('')
     try {
-      const availability = await checkTeamNameAvailability(value.name.trim(), team.id)
-      if (!availability.available) throw new Error('이미 사용 중인 팀 이름입니다.')
-
       const response = await updateTeamRequest(team.id, {
         name: value.name.trim(),
         description: value.description.trim(),
@@ -469,7 +573,7 @@ export default function TeamListPage() {
             : {
                 ...mapApiTeam(teamResponse.team, index, currentTeam),
                 members: membersResponse.members.map(mapApiMember),
-                joinRequests: requestsResponse.requests.map(mapApiJoinRequest),
+                joinRequests: mapPendingJoinRequests(requestsResponse.requests),
               },
         ),
       )
