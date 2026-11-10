@@ -33,6 +33,7 @@ export default function ProjectPreviewPage() {
           <a href="?preview=common">00 공통 보기</a>
           <a href="?preview=intro">01 소개 보기</a>
           <a href="?preview=team">03 팀 관리 보기</a>
+          <a href="?preview=settings">05 개인 설정 보기</a>
         </nav>
         <p role="status" className="text-[14px] text-[#737b88]">
           {message}
