@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import TeamCreateButton from './TeamCreateButton'
+import { getApiErrorMessage } from '../../services/api'
 
 export type TeamCreateInput = {
   name: string
@@ -9,8 +10,8 @@ export type TeamCreateInput = {
 export type TeamCreateDialogProps = {
   open: boolean
   onClose: () => void
-  onCreate: (team: TeamCreateInput) => void
-  onJoin?: (inviteCode: string) => void
+  onCreate: (team: TeamCreateInput) => void | Promise<void>
+  onJoin?: (inviteCode: string) => void | Promise<void>
 }
 
 type DialogView = 'choice' | 'create' | 'join'
@@ -26,6 +27,8 @@ export default function TeamCreateDialog({
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [inviteCode, setInviteCode] = useState('')
+  const [operationError, setOperationError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const id = useId()
 
   useEffect(() => {
@@ -35,40 +38,63 @@ export default function TeamCreateDialog({
     if (!open && dialog.open) dialog.close()
   }, [open])
 
-  const close = () => {
+  const reset = () => {
     setView('choice')
     setName('')
     setDescription('')
     setInviteCode('')
+    setOperationError('')
+  }
+
+  const close = () => {
+    if (submitting) return
+    reset()
     onClose()
   }
 
   const goToChoice = () => {
     setView('choice')
+    setOperationError('')
   }
 
-  const handleCreate = (event: FormEvent<HTMLFormElement>) => {
+  const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const normalizedName = name.trim()
-    if (!normalizedName) return
+    if (!normalizedName || submitting) return
 
-    onCreate({ name: normalizedName, description: description.trim() })
-    setView('choice')
-    setName('')
-    setDescription('')
-    setInviteCode('')
+    setSubmitting(true)
+    setOperationError('')
+    try {
+      await onCreate({ name: normalizedName, description: description.trim() })
+      reset()
+      onClose()
+    } catch (error) {
+      setOperationError(getApiErrorMessage(error, '팀을 만들지 못했습니다. 다시 시도해 주세요.'))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const handleJoin = (event: FormEvent<HTMLFormElement>) => {
+  const handleJoin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const normalizedCode = inviteCode.trim()
-    if (!normalizedCode) return
+    if (!normalizedCode || submitting) return
 
     if (onJoin) {
-      onJoin(normalizedCode)
+      setSubmitting(true)
+      setOperationError('')
+      try {
+        await onJoin(normalizedCode)
+        reset()
+        onClose()
+      } catch (error) {
+        setOperationError(getApiErrorMessage(error, '팀 참가 요청을 보내지 못했습니다.'))
+      } finally {
+        setSubmitting(false)
+      }
       return
     }
-    console.info('팀 참가 기능은 서버 연결 후 이용할 수 있습니다.')
+    console.warn('[API] 팀 참가 요청 함수가 연결되지 않았습니다.')
   }
 
   return (
@@ -140,9 +166,12 @@ export default function TeamCreateDialog({
               id={`${id}-name`}
               autoFocus
               required
-              maxLength={60}
+              maxLength={80}
               value={name}
-              onChange={(event) => setName(event.currentTarget.value)}
+              onChange={(event) => {
+                setName(event.currentTarget.value)
+                setOperationError('')
+              }}
               placeholder="팀 이름을 입력해 주세요"
               className="h-12 rounded-lg border border-[#e3e6eb] px-4 text-base font-normal outline-none focus-visible:border-[#2563eb] focus-visible:ring-2 focus-visible:ring-[#2563eb]/20"
             />
@@ -152,26 +181,36 @@ export default function TeamCreateDialog({
             <textarea
               id={`${id}-description`}
               rows={4}
-              maxLength={240}
+              maxLength={4000}
               value={description}
-              onChange={(event) => setDescription(event.currentTarget.value)}
+              onChange={(event) => {
+                setDescription(event.currentTarget.value)
+                setOperationError('')
+              }}
               placeholder="팀 설명을 입력해 주세요"
               className="resize-y rounded-lg border border-[#e3e6eb] p-4 text-base font-normal outline-none focus-visible:border-[#2563eb] focus-visible:ring-2 focus-visible:ring-[#2563eb]/20"
             />
           </label>
+          {operationError && (
+            <p role="alert" className="text-sm text-[#dc2626]">
+              {operationError}
+            </p>
+          )}
           <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
             <button
               type="button"
               onClick={goToChoice}
+              disabled={submitting}
               className="h-11 cursor-pointer rounded-lg border border-[#e3e6eb] px-5 text-sm font-medium hover:bg-[#f6f7f9]"
             >
               이전
             </button>
             <button
               type="submit"
-              className="h-11 cursor-pointer rounded-lg bg-[#2563eb] px-5 text-sm font-semibold text-white hover:bg-[#3d7af2]"
+              disabled={submitting}
+              className="h-11 cursor-pointer rounded-lg bg-[#2563eb] px-5 text-sm font-semibold text-white hover:bg-[#3d7af2] disabled:cursor-wait disabled:opacity-60"
             >
-              팀 만들기
+              {submitting ? '팀 만드는 중...' : '팀 만들기'}
             </button>
           </div>
         </form>
@@ -188,35 +227,43 @@ export default function TeamCreateDialog({
             <h2 id={`${id}-title`} className="text-2xl font-semibold">
               새 팀 참가
             </h2>
-            <p className="mt-2 text-sm text-[#737b88]">
-              팀 초대 코드나 링크를 입력해 주세요.
-            </p>
+            <p className="mt-2 text-sm text-[#737b88]">팀 초대 코드를 입력해 주세요.</p>
           </header>
           <label htmlFor={`${id}-invite-code`} className="flex flex-col gap-2 text-sm font-medium">
-            초대 코드 또는 링크
+            초대 코드
             <input
               id={`${id}-invite-code`}
               autoFocus
               required
               value={inviteCode}
-              onChange={(event) => setInviteCode(event.currentTarget.value)}
-              placeholder="초대 코드 또는 링크를 입력해 주세요"
+              onChange={(event) => {
+                setInviteCode(event.currentTarget.value)
+                setOperationError('')
+              }}
+              placeholder="팀 초대 코드를 입력해 주세요"
               className="h-12 rounded-lg border border-[#e3e6eb] px-4 text-base font-normal outline-none focus-visible:border-[#2563eb] focus-visible:ring-2 focus-visible:ring-[#2563eb]/20"
             />
           </label>
+          {operationError && (
+            <p role="alert" className="text-sm text-[#dc2626]">
+              {operationError}
+            </p>
+          )}
           <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
             <button
               type="button"
               onClick={goToChoice}
+              disabled={submitting}
               className="h-11 cursor-pointer rounded-lg border border-[#e3e6eb] px-5 text-sm font-medium hover:bg-[#f6f7f9]"
             >
               이전
             </button>
             <button
               type="submit"
-              className="h-11 cursor-pointer rounded-lg bg-[#2563eb] px-5 text-sm font-semibold text-white hover:bg-[#3d7af2]"
+              disabled={submitting}
+              className="h-11 cursor-pointer rounded-lg bg-[#2563eb] px-5 text-sm font-semibold text-white hover:bg-[#3d7af2] disabled:cursor-wait disabled:opacity-60"
             >
-              팀 참가
+              {submitting ? '요청 중...' : '팀 참가 요청'}
             </button>
           </div>
         </form>

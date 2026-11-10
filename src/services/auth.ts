@@ -1,17 +1,60 @@
-/**
- * 인증 관련 서버 통신 코드를 작성하는 파일입니다.
- * 화면 컴포넌트(UI) 코드는 이 파일에 넣지 않습니다.
- *
- * 여기에 작성할 내용:
- * 1. 로그인, 회원가입, 이메일 인증 등 각 API의 요청 데이터 타입
- *    - 예: 이메일/비밀번호, 인증번호
- * 2. 서버가 돌려주는 응답 데이터 타입
- *    - 예: 사용자 정보, 성공 여부, 액세스 토큰
- * 3. 서버 API를 호출하는 함수
- *    - 예: 로그인, 회원가입, 인증번호 발송 및 확인
- * 4. 공통 요청 처리
- *    - API 기본 주소, JSON 변환, 실패 응답/네트워크 오류 처리
- *
- * 백엔드 API 주소와 경로, 요청·응답 형식이 정해지면 그 규격에 맞춰 구현하세요.
- * 비밀 키나 서버 비밀번호는 프론트엔드 코드에 저장하지 마세요.
- */
+import { apiRequest, setAccessToken } from './api'
+
+export type AuthUser = {
+  id: string
+  email: string
+  username: string
+  nickname: string
+  avatarUrl?: string
+}
+
+type LoginResponse = {
+  accessToken: string
+  user: AuthUser
+}
+
+type CurrentUserResponse = { user: AuthUser }
+
+const USER_CACHE_KEY = 'scenespect.user'
+
+export async function login(login: string, password: string) {
+  const response = await apiRequest<LoginResponse>('/api/v1/auth/login', {
+    method: 'POST',
+    authenticated: false,
+    body: { login, password },
+  })
+
+  setAccessToken(response.accessToken)
+  sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify(response.user))
+  return response.user
+}
+
+export async function getCurrentUser() {
+  const response = await apiRequest<CurrentUserResponse>('/api/v1/auth/me')
+  sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify(response.user))
+  return response.user
+}
+
+export function getCachedUser(): AuthUser | null {
+  const cached = sessionStorage.getItem(USER_CACHE_KEY)
+  if (!cached) return null
+  try {
+    return JSON.parse(cached) as AuthUser
+  } catch {
+    sessionStorage.removeItem(USER_CACHE_KEY)
+    return null
+  }
+}
+
+export async function logout() {
+  try {
+    await apiRequest<void>('/api/v1/auth/logout', {
+      method: 'POST',
+      authenticated: false,
+      retryAuthentication: false,
+    })
+  } finally {
+    setAccessToken(null)
+    sessionStorage.removeItem(USER_CACHE_KEY)
+  }
+}

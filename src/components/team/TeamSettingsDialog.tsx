@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { commonStyles } from '../common/styles'
 import TeamCreateButton from './TeamCreateButton'
 import TeamMemberRow from './TeamMemberRow'
-import type { TeamDetails, TeamMember } from './types'
+import type { TeamDetails, TeamJoinRequest, TeamMember } from './types'
 import close from '../../assets/icons/team/close.svg'
 import edit from '../../assets/icons/team/avatar-edit.svg'
 import separator from '../../assets/icons/team/separator.svg'
@@ -13,12 +13,16 @@ export type TeamSettingsDialogProps = {
   onClose: () => void
   value: TeamDetails
   onChange: (value: TeamDetails) => void
-  onSave: (value: TeamDetails) => void
+  onSave: (value: TeamDetails) => void | Promise<void>
   members: TeamMember[]
-  onAvatarChange: (file: File) => void
+  joinRequests?: TeamJoinRequest[]
+  onAvatarChange: (file: File) => void | Promise<void>
   onInvite: () => void
   onMemberMenu: (member: TeamMember) => void
-  onMemberRoleChange?: (member: TeamMember, role: string) => void
+  onMemberRoleChange?: (member: TeamMember, role: string) => void | Promise<void>
+  onMemberWarning?: (member: TeamMember) => void | Promise<void>
+  onMemberRemove?: (member: TeamMember) => void | Promise<void>
+  onReviewJoinRequest?: (requestId: string, accept: boolean) => void | Promise<void>
   onTransferRequest: () => void
   onDeleteRequest: () => void
   initialView?: 'info' | 'members'
@@ -48,7 +52,7 @@ const fields = [
     key: 'guidelines',
     label: '팀 가이드라인',
     placeholder: '팀의 프로젝트에서 AI의 판단기준을 입력하세요',
-    required: true,
+    required: false,
   },
 ] as const
 
@@ -76,10 +80,14 @@ function SettingsContent({
   onChange,
   onSave,
   members,
+  joinRequests = [],
   onAvatarChange,
   onInvite,
   onMemberMenu,
   onMemberRoleChange,
+  onMemberWarning,
+  onMemberRemove,
+  onReviewJoinRequest,
   onTransferRequest,
   onDeleteRequest,
   initialView = 'info',
@@ -426,6 +434,8 @@ function SettingsContent({
                       disabled={saving}
                       onMenuClick={onMemberMenu}
                       onRoleChange={onMemberRoleChange}
+                      onWarning={onMemberWarning}
+                      onRemoveMember={onMemberRemove}
                       size="compact"
                     />
                   </li>
@@ -434,6 +444,46 @@ function SettingsContent({
                   <li className="text-[16px] text-[#6b7280]">아직 등록된 팀 멤버가 없습니다.</li>
                 )}
               </ul>
+              {joinRequests.length > 0 && (
+                <section aria-label="팀 가입 신청" className="flex flex-col gap-3 px-[10px] max-sm:px-0">
+                  <h4 className="text-[18px] font-semibold">
+                    가입 신청 <span className="text-[14px] text-[#6b7280]">{joinRequests.length}명</span>
+                  </h4>
+                  <ul className="flex flex-col gap-2">
+                    {joinRequests.map((request) => (
+                      <li
+                        key={request.id}
+                        className="flex items-center justify-between gap-3 rounded-[8px] bg-[#f7f8fa] px-4 py-3 max-sm:flex-wrap"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-[15px] font-medium">{request.nickname}</p>
+                          <p className="text-[12px] text-[#6b7280]">
+                            {new Date(request.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 gap-2">
+                          <button
+                            type="button"
+                            disabled={saving || !onReviewJoinRequest}
+                            onClick={() => void onReviewJoinRequest?.(request.id, true)}
+                            className={`h-9 cursor-pointer rounded-[6px] bg-[#2563eb] px-3 text-[13px] font-medium text-white hover:bg-[#1d4ed8] disabled:cursor-wait disabled:opacity-50 ${commonStyles.focus}`}
+                          >
+                            승인
+                          </button>
+                          <button
+                            type="button"
+                            disabled={saving || !onReviewJoinRequest}
+                            onClick={() => void onReviewJoinRequest?.(request.id, false)}
+                            className={`h-9 cursor-pointer rounded-[6px] border border-[#e3e6eb] bg-white px-3 text-[13px] font-medium text-[#6b7280] hover:bg-[#f6f7f9] disabled:cursor-wait disabled:opacity-50 ${commonStyles.focus}`}
+                          >
+                            거절
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
               <Divider />
               <button
                 type="button"

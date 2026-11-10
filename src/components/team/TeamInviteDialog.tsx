@@ -6,7 +6,7 @@ export type TeamInviteDialogProps = {
   teamName: string
   teamCode: string
   onClose: () => void
-  onInviteEmail: (email: string) => boolean
+  onInviteEmail?: (email: string) => boolean | Promise<boolean>
 }
 
 export default function TeamInviteDialog({
@@ -31,19 +31,27 @@ export default function TeamInviteDialog({
     }
   }, [])
 
-  const handleInvite = (event: FormEvent<HTMLFormElement>) => {
+  const handleInvite = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const normalizedEmail = email.trim().toLowerCase()
     if (!normalizedEmail) return
 
-    if (!onInviteEmail(normalizedEmail)) {
-      setMessage('이 이메일은 이미 팀에 있거나 초대 대기 중입니다.')
+    if (!onInviteEmail) {
+      console.warn('[API] 이메일 초대 엔드포인트가 제공된 명세에 없어 요청을 보내지 않았습니다.')
       return
     }
 
-    setEmail('')
-    setMessage('초대 대기 목록에 추가했습니다.')
-    console.info(`${normalizedEmail}의 이메일 초대는 서버 연결 후 가능합니다.`)
+    try {
+      const sent = await onInviteEmail(normalizedEmail)
+      if (!sent) {
+        setMessage('이 이메일은 이미 팀에 있거나 초대 대기 중입니다.')
+        return
+      }
+      setEmail('')
+      setMessage('초대 메일을 보냈습니다.')
+    } catch {
+      setMessage('초대 메일을 보내지 못했습니다.')
+    }
   }
 
   const copyCode = async () => {
@@ -115,6 +123,7 @@ export default function TeamInviteDialog({
                 setMessage('')
               }}
               placeholder="example@email.com"
+              disabled={!onInviteEmail}
               className={`h-12 w-full rounded-lg border border-[#e3e6eb] px-3 text-base font-normal outline-none focus-visible:border-[#2563eb] focus-visible:ring-2 focus-visible:ring-[#2563eb]/20 sm:px-4 sm:text-lg ${commonStyles.focus}`}
             />
             <div className="h-[28px] overflow-hidden" aria-live="polite">
@@ -139,7 +148,12 @@ export default function TeamInviteDialog({
           >
             닫기
           </button>
-          <TeamCreateButton type="submit" className="w-full sm:w-auto">
+          <TeamCreateButton
+            type="submit"
+            disabled={!onInviteEmail}
+            title={onInviteEmail ? undefined : '이메일 초대 API가 아직 제공되지 않았습니다'}
+            className="w-full sm:w-auto"
+          >
             이메일로 초대
           </TeamCreateButton>
         </footer>

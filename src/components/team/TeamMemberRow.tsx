@@ -8,7 +8,9 @@ const availableRoles = ['부팀장', '수정허용', '보기허용'] as const
 export type TeamMemberRowProps = {
   member: TeamMember
   onMenuClick?: (member: TeamMember) => void
-  onRoleChange?: (member: TeamMember, role: string) => void
+  onRoleChange?: (member: TeamMember, role: string) => void | Promise<void>
+  onWarning?: (member: TeamMember) => void | Promise<void>
+  onRemoveMember?: (member: TeamMember) => void | Promise<void>
   disabled?: boolean
   size?: 'default' | 'compact'
   className?: string
@@ -18,6 +20,8 @@ export default function TeamMemberRow({
   member,
   onMenuClick,
   onRoleChange,
+  onWarning,
+  onRemoveMember,
   disabled = false,
   size = 'default',
   className = '',
@@ -79,7 +83,7 @@ export default function TeamMemberRow({
             {member.name}
           </p>
           <p className={`${compact ? 'max-sm:hidden text-[12px]' : 'text-[14px]'} text-[#6b7280]`}>
-            {member.role}
+            {member.warningCount ? `${member.role} · 경고 ${member.warningCount}회` : member.role}
           </p>
         </div>
       </div>
@@ -87,7 +91,7 @@ export default function TeamMemberRow({
         <p className={`${compact ? 'text-[16px] max-sm:text-[14px]' : 'text-[26px]'} font-medium text-[#6b7280]`}>
           {member.role}
         </p>
-        {member.showMenu !== false && (onMenuClick || onRoleChange) && (
+        {member.showMenu !== false && (onMenuClick || onRoleChange || onWarning || onRemoveMember) && (
           <div ref={menuRootRef} className="relative">
             <button
               ref={triggerRef}
@@ -98,11 +102,14 @@ export default function TeamMemberRow({
               aria-controls={menuOpen ? menuId : undefined}
               disabled={disabled}
               onClick={() => {
-                if (onRoleChange) setMenuOpen((current) => !current)
+                if (onRoleChange || onWarning || onRemoveMember) setMenuOpen((current) => !current)
                 else onMenuClick?.(member)
               }}
               onKeyDown={(event) => {
-                if (!onRoleChange || (event.key !== 'ArrowDown' && event.key !== 'ArrowUp')) return
+                if (
+                  (!onRoleChange && !onWarning && !onRemoveMember) ||
+                  (event.key !== 'ArrowDown' && event.key !== 'ArrowUp')
+                ) return
                 event.preventDefault()
                 setMenuOpen(true)
               }}
@@ -114,7 +121,7 @@ export default function TeamMemberRow({
                 className={`max-w-none shrink-0 ${compact ? 'w-[18px]' : ''}`}
               />
             </button>
-            {menuOpen && onRoleChange && (
+            {menuOpen && (onRoleChange || onWarning || onRemoveMember) && (
               <div
                 ref={menuRef}
                 id={menuId}
@@ -123,7 +130,7 @@ export default function TeamMemberRow({
                 onKeyDown={(event) => {
                   const items = [
                     ...event.currentTarget.querySelectorAll<HTMLButtonElement>(
-                      '[role="menuitemradio"]',
+                      'button[role^="menuitem"]',
                     ),
                   ]
                   const index = items.indexOf(document.activeElement as HTMLButtonElement)
@@ -146,7 +153,7 @@ export default function TeamMemberRow({
                     role="menuitemradio"
                     aria-checked={member.role === role}
                     onClick={() => {
-                      onRoleChange(member, role)
+                      void onRoleChange?.(member, role)
                       setMenuOpen(false)
                       triggerRef.current?.focus()
                     }}
@@ -155,6 +162,39 @@ export default function TeamMemberRow({
                     {role}
                   </button>
                 ))}
+                {(onWarning || onRemoveMember) && (
+                  <div role="separator" className="my-1 h-px bg-[#e2e6ec]" />
+                )}
+                {onWarning && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={disabled}
+                    onClick={() => {
+                      void onWarning(member)
+                      setMenuOpen(false)
+                      triggerRef.current?.focus()
+                    }}
+                    className={`flex min-h-[40px] w-full cursor-pointer items-center rounded-[6px] px-3 text-left text-sm font-medium text-[#16181d] hover:bg-[#f3f7ff] disabled:cursor-wait disabled:opacity-50 ${commonStyles.focus}`}
+                  >
+                    경고 1회 주기
+                  </button>
+                )}
+                {onRemoveMember && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    disabled={disabled}
+                    onClick={() => {
+                      void onRemoveMember(member)
+                      setMenuOpen(false)
+                      triggerRef.current?.focus()
+                    }}
+                    className={`flex min-h-[40px] w-full cursor-pointer items-center rounded-[6px] px-3 text-left text-sm font-medium text-[#dc2626] hover:bg-[#fef2f2] disabled:cursor-wait disabled:opacity-50 ${commonStyles.focus}`}
+                  >
+                    팀에서 내보내기
+                  </button>
+                )}
               </div>
             )}
           </div>
