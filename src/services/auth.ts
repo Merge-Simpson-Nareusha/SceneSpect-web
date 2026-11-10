@@ -171,7 +171,7 @@ export async function setSignupPassword(
 // 현재 가입에 적용할 약관 목록과 서버 발급 ID를 가져옵니다.
 export async function getSignupTerms(): Promise<SignupTermsResponse> {
   try {
-    const response = await api.get<unknown>('/v1/auth/signup/terms')
+    const response = await api.get<unknown>('/v1/auth/signup/terms', { timeout: 15_000 })
     const data = response.data
 
     if (
@@ -206,9 +206,19 @@ export async function getSignupTerms(): Promise<SignupTermsResponse> {
 
     return { terms: data.terms as SignupTerm[] }
   } catch (error) {
-    if (error instanceof Error && !axios.isAxiosError(error)) throw error
+    if (!axios.isAxiosError(error)) {
+      if (error instanceof Error) throw error
+      throw new Error('약관 목록을 불러오지 못했습니다.')
+    }
 
-    throw new Error(getServerErrorMessage(error, '약관 목록을 불러오지 못했습니다.'), {
+    const fallbackMessage =
+      error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT'
+        ? '약관 목록 서버가 15초 안에 응답하지 않았습니다. 잠시 후 다시 시도해 주세요.'
+        : error.response
+          ? `약관 목록 요청에 실패했습니다. (HTTP ${error.response.status})`
+          : '약관 목록 서버에 연결할 수 없습니다. 네트워크를 확인해 주세요.'
+
+    throw new Error(getServerErrorMessage(error, fallbackMessage), {
       cause: error,
     })
   }

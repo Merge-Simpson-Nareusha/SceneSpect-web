@@ -433,7 +433,11 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
                   disabled={verificationCode.length !== 6 || isSubmittingVerification}
                   onClick={handleVerificationNext}
                 >
-                  {isSubmittingVerification ? '확인 중...' : '인증하고 계속하기'}
+                  {isSubmittingVerification
+                    ? isEmailVerified
+                      ? '약관 불러오는 중...'
+                      : '확인 중...'
+                    : '인증하고 계속하기'}
                 </Button>
                 <AuthActionText
                   message={isSendingVerification ? '인증 메일을 보내고 있어요.' : '인증 메일이 오지 않았나요?'}
