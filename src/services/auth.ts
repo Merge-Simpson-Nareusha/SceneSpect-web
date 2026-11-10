@@ -1,11 +1,25 @@
 import axios from 'axios'
+import { apiRequest, API_ROOT, setAccessToken } from './api'
 
 // 모든 인증 요청은 같은 Axios 설정을 사용합니다.
 // 개발 환경에서는 Vite가 /api 요청을 백엔드 주소로 전달합니다.
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_ROOT,
   withCredentials: true,
 })
+
+export type AuthUser = {
+  id: string
+  email: string
+  username: string
+  nickname: string
+  avatarUrl?: string
+}
+
+type LoginResponse = { accessToken: string; user: AuthUser }
+type CurrentUserResponse = { user: AuthUser }
+
+const USER_CACHE_KEY = 'scenespect.user'
 
 type SignupStartResponse = {
   signupSessionId: string
@@ -54,16 +68,11 @@ type SignupConsent = {
   accepted: boolean
 }
 
-type SignupCompleteResponse = {
+export type SignupCompleteResponse = {
   accessToken: string
   tokenType: 'Bearer'
   expiresIn: number
-  user: {
-    id: string
-    email: string
-    username: string
-    nickname: string
-    avatarUrl: string
+  user: AuthUser & {
     displayTheme: string
     role: string
     status: string
@@ -208,7 +217,7 @@ export async function getSignupTerms(): Promise<SignupTermsResponse> {
   } catch (error) {
     if (!axios.isAxiosError(error)) {
       if (error instanceof Error) throw error
-      throw new Error('약관 목록을 불러오지 못했습니다.')
+      throw new Error('약관 목록을 불러오지 못했습니다.', { cause: error })
     }
 
     const fallbackMessage =
@@ -269,10 +278,54 @@ export async function completeSignup(
       signupSessionId,
       consents,
     })
+    setAccessToken(response.data.accessToken)
+    sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify(response.data.user))
     return response.data
   } catch (error) {
     throw new Error(getServerErrorMessage(error, '회원가입을 완료하지 못했습니다.'), {
       cause: error,
     })
+  }
+}
+
+export async function login(loginId: string, password: string) {
+  const response = await apiRequest<LoginResponse>('/api/v1/auth/login', {
+    method: 'POST',
+    authenticated: false,
+    body: { login: loginId, password },
+  })
+
+  setAccessToken(response.accessToken)
+  sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify(response.user))
+  return response.user
+}
+
+export async function getCurrentUser() {
+  const response = await apiRequest<CurrentUserResponse>('/api/v1/auth/me')
+  sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify(response.user))
+  return response.user
+}
+
+export function getCachedUser(): AuthUser | null {
+  const cached = sessionStorage.getItem(USER_CACHE_KEY)
+  if (!cached) return null
+  try {
+    return JSON.parse(cached) as AuthUser
+  } catch {
+    sessionStorage.removeItem(USER_CACHE_KEY)
+    return null
+  }
+}
+
+export async function logout() {
+  try {
+    await apiRequest<void>('/api/v1/auth/logout', {
+      method: 'POST',
+      authenticated: false,
+      retryAuthentication: false,
+    })
+  } finally {
+    setAccessToken(null)
+    sessionStorage.removeItem(USER_CACHE_KEY)
   }
 }
