@@ -222,7 +222,7 @@ function AuthFormField({
   const inputType = canTogglePassword && isPasswordVisible ? 'text' : type
   const passwordValue = String(value ?? internalValue)
   const passwordRules = {
-    hasMinimumLength: passwordValue.length >= 8,
+    hasMinimumLength: passwordValue.length >= 12,
     hasEnglishLetter: /[A-Za-z]/.test(passwordValue),
     hasSpecialCharacter: /[^\p{L}\p{N}\s]/u.test(passwordValue),
   }
@@ -263,7 +263,7 @@ function AuthFormField({
                   : 'text-[#EF4444]'
               }
             >
-              8자 이상
+              12자 이상
             </span>
             <span className="text-[#B0B0B0]">·</span>
             <span

@@ -1,6 +1,7 @@
 node_modules
 dist
 coverage
+# Environment files (keep the shared example file tracked)
 .env
 .env.*
 !.env.example
