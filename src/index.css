@@ -115,3 +115,128 @@ body,
     animation: none;
   }
 }
+
+/* Match the signup screen's shared viewport frame and two-column proportions. */
+.login-page {
+  width: 100%;
+  max-width: 2560px;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.login-page-layout {
+  height: 100%;
+}
+
+.login-page-content {
+  gap: clamp(1rem, 2cqw, 2rem);
+}
+
+.login-page-fields {
+  gap: clamp(0.75rem, 1.25cqw, 1rem);
+}
+
+.login-page-actions {
+  margin-top: clamp(-24px, -1.5cqw, -12px);
+  gap: clamp(0.75rem, 1.25cqw, 1.125rem);
+}
+
+.login-page-fields input {
+  height: clamp(2.25rem, 6.93svh, 3.25rem);
+}
+
+.login-page-fields label {
+  font-size: clamp(0.875rem, 2.4svh, 1.125rem);
+}
+
+.login-page-actions > div:first-child > button {
+  min-height: clamp(2.25rem, 6.4svh, 3rem);
+  padding-block: clamp(0.375rem, 1.2svh, 0.75rem);
+}
+
+.login-page-actions > .grid button {
+  min-height: clamp(2rem, 7.5svh, 2.75rem);
+}
+
+@media (max-width: 767px) {
+  .login-page-visual {
+    display: none;
+  }
+
+  .login-page-panel {
+    width: 100%;
+    max-width: none;
+    padding-inline: 0;
+  }
+}
+
+@media (max-height: 700px) {
+  .login-page-layout {
+    padding-block: clamp(8px, 2svh, 16px);
+  }
+
+  .login-page-content {
+    gap: clamp(8px, 2.5svh, 18px);
+  }
+
+  .login-page-fields,
+  .login-page-actions {
+    gap: clamp(8px, 2svh, 14px);
+  }
+}
+
+@media (max-width: 767px) {
+  .login-page-layout {
+    padding-block: 16px;
+  }
+
+  .login-page-panel {
+    justify-content: flex-start;
+    padding-bottom: 16px;
+  }
+
+  .login-page-content {
+    gap: 12px;
+  }
+
+  .login-page-fields {
+    gap: 10px;
+  }
+
+  .login-page-actions {
+    margin-top: 0;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 767px) and (max-height: 700px) {
+  .login-page-layout {
+    padding-block: 8px;
+  }
+
+  .login-page-panel {
+    padding-bottom: 8px;
+  }
+
+  .login-page-content,
+  .login-page-fields,
+  .login-page-actions {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 767px) and (max-height: 480px) {
+  .login-page-layout {
+    padding-block: 4px;
+  }
+
+  .login-page-panel {
+    padding-bottom: 4px;
+  }
+
+  .login-page-content,
+  .login-page-fields,
+  .login-page-actions {
+    gap: 4px;
+  }
+}

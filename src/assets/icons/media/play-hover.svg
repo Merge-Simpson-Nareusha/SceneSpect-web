@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+<foreignObject x="-30" y="-30" width="120" height="120"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(15px);clip-path:url(#bgblur_0_0_10_clip_path);height:100%;width:100%"></div></foreignObject><g id="Media/VideoControl" data-figma-bg-blur-radius="30">
+<rect width="60" height="60" rx="30" fill="white" fill-opacity="0.6"/>
+<foreignObject x="-7" y="-9.62031" width="77.8499" height="79.2406"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(15px);clip-path:url(#bgblur_1_0_10_clip_path);height:100%;width:100%"></div></foreignObject><path id="Vector 4" data-figma-bg-blur-radius="30" d="M25.9638 20.6301C24.6309 19.897 23 20.8613 23 22.3825V37.6175C23 39.1387 24.6309 40.103 25.9638 39.3699L39.8138 31.7524C41.1953 30.9926 41.1953 29.0074 39.8138 28.2476L25.9638 20.6301Z" fill="white" fill-opacity="0.8"/>
+</g>
+<defs>
+<clipPath id="bgblur_0_0_10_clip_path" transform="translate(30 30)"><rect width="60" height="60" rx="30"/>
+</clipPath><clipPath id="bgblur_1_0_10_clip_path" transform="translate(7 9.62031)"><path d="M25.9638 20.6301C24.6309 19.897 23 20.8613 23 22.3825V37.6175C23 39.1387 24.6309 40.103 25.9638 39.3699L39.8138 31.7524C41.1953 30.9926 41.1953 29.0074 39.8138 28.2476L25.9638 20.6301Z"/>
+</clipPath></defs>
+</svg>
