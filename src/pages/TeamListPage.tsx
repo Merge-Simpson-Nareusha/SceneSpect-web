@@ -48,7 +48,7 @@ type TeamPreview = TeamDetails & {
   joinCode?: string
 }
 
-type TeamListNavigationState = { accountName?: string }
+type TeamListNavigationState = { accountName?: string; email?: string; user?: AuthUser }
 type TeamInviteTarget = { teamId: string; code: string }
 
 function getStoredJoinCode(teamId: string) {
@@ -129,9 +129,11 @@ function sortTeamList(teams: TeamPreview[], sort: TeamSort) {
 export default function TeamListPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const navigationAccountName =
-    (location.state as TeamListNavigationState | null)?.accountName?.trim() ?? ''
-  const [user, setUser] = useState<AuthUser | null>(() => getCachedUser())
+  const navigationState = location.state as TeamListNavigationState | null
+  const navigationAccountName = navigationState?.accountName?.trim() ?? ''
+  const [user, setUser] = useState<AuthUser | null>(
+    () => navigationState?.user ?? getCachedUser(),
+  )
   const [teams, setTeams] = useState<TeamPreview[]>([])
   const [sort, setSort] = useState<TeamSort>('recent')
   const [loading, setLoading] = useState(true)
@@ -148,7 +150,7 @@ export default function TeamListPage() {
   const [notice, setNotice] = useState('')
 
   const accountName = user?.nickname || navigationAccountName
-  const accountEmail = user?.email ?? ''
+  const accountEmail = user?.email || navigationState?.email || ''
   const settingsTeam = teams.find((team) => team.id === settingsTeamId)
   const inviteTeam = teams.find((team) => team.id === inviteTarget?.teamId)
 

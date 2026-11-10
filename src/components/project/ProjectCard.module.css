@@ -1,0 +1,61 @@
+.card {
+  --cover-shade: 0.5;
+  --badge-background: rgb(255 255 255 / 80%);
+  --badge-text: #2563eb;
+  --muted-badge-text: #1a45a4;
+}
+
+.card[data-status='paused'] {
+  --badge-shade: 0.2;
+  --muted-badge-shade: 0.44;
+  --badge-text: #1c2538;
+  --muted-badge-text: #141a27;
+}
+
+.card[data-status='completed'] {
+  --badge-background: #2563eb;
+  --badge-text: #fff;
+  --muted-badge-text: #b2b2b2;
+}
+
+.card:is([data-preview-state='hover'], :not([data-preview-state]):hover) {
+  --cover-shade: 0.7;
+  filter: blur(0.5px);
+}
+
+.card:is(
+  [data-preview-state='actionHover'],
+  :has(.action:focus-visible),
+  :not([data-preview-state]):has(.action:hover)
+) {
+  --cover-shade: 0.7;
+  --detail-color: #b2b2b2;
+  --detail-filter: blur(0.5px);
+  --badge-shade: var(--muted-badge-shade, 0.3);
+  --active-badge-text: var(--muted-badge-text);
+  --action-background: #2563eb;
+  filter: none;
+}
+
+.shade {
+  background: rgb(0 0 0 / var(--cover-shade));
+}
+
+.details {
+  color: var(--detail-color, #fff);
+  filter: var(--detail-filter, none);
+}
+
+.description {
+  color: var(--detail-color, #e3e6eb);
+}
+
+.badge {
+  --badge-overlay: rgb(0 0 0 / var(--badge-shade, 0));
+  background: linear-gradient(var(--badge-overlay), var(--badge-overlay)), var(--badge-background);
+  color: var(--active-badge-text, var(--badge-text));
+}
+
+.action {
+  background: var(--action-background, transparent);
+}

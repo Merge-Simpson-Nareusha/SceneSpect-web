@@ -19,8 +19,14 @@ type FetchOptions = Omit<RequestInit, 'body'> & { body?: unknown }
 type TokenResponse = { accessToken: string }
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '')
+export const API_ROOT = import.meta.env.DEV ? '/api' : `${API_BASE_URL}/api`
 let accessToken: string | null = null
 let refreshRequest: Promise<string | null> | null = null
+
+function getApiUrl(path: string) {
+  const suffix = path.startsWith('/api/') ? path.slice(4) : path.startsWith('/') ? path : `/${path}`
+  return `${API_ROOT}${suffix}`
+}
 
 export function setAccessToken(token: string | null) {
   accessToken = token
@@ -32,7 +38,7 @@ async function refreshAccessToken(): Promise<string | null> {
   refreshRequest = (async () => {
     if (!API_BASE_URL) throw new ApiError('API 주소가 설정되지 않았습니다.', 0)
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/token/refresh`, {
+    const response = await fetch(getApiUrl('/api/v1/auth/token/refresh'), {
       method: 'POST',
       credentials: 'include',
       headers: { Accept: 'application/json' },
@@ -84,7 +90,7 @@ async function sendRequest(path: string, options: FetchOptions, token?: string |
 
   if (token) requestHeaders.set('Authorization', `Bearer ${token}`)
 
-  return fetch(`${API_BASE_URL}${path}`, {
+  return fetch(getApiUrl(path), {
     ...requestOptions,
     headers: requestHeaders,
     body: requestBody,

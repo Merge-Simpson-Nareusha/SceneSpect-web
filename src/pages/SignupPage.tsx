@@ -3,6 +3,16 @@
 // - 계정 정보, 비밀번호, 이메일 인증, 약관 동의, 가입 완료 단계를 다룹니다.
 // - 약관 체크박스/전체 동의나 인증번호 칸은 화면에서 반복될 때 별도 컴포넌트로 분리합니다.
 // - 서버 요청 함수는 services/auth.ts에 직접 작성하지 않고, 그 파일의 함수를 연결합니다.
+import {
+  completeSignup,
+  getSignupTerms,
+  sendSignupVerificationCode,
+  setSignupPassword,
+  startSignup,
+  updateSignupEmail,
+  verifySignupEmail,
+  type SignupTerm,
+} from '../services/auth'
 import FormDivider from '../components/auth/FormDivider'
 import Button from '../components/auth/Button'
 import SocialLoginButton from '../components/auth/SocialLoginButton'
@@ -16,17 +26,14 @@ import TermsAgreement from '../components/auth/TermsAgreement'
 import completionIcon from '../assets/icons/signup/signup-complete.svg'
 import scenespectLogoFull from '../assets/logos/scenespect-logo-full.svg'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+import type { AuthUser } from '../services/auth'
 
 type SignupError = 'invalidCredentials' | 'alreadyRegistered'
 
 type SignupPageProps = {
   error?: SignupError | null
-  // 인증 코드를 검증해 true/false를 반환합니다. false이면 입력 필드를 오류 상태로 표시합니다.
-  verifyVerificationCode?: (code: string) => boolean | Promise<boolean>
-  // 인증 코드를 다시 발송합니다. 생략하면 API 연결 전 화면 흐름만 재현합니다.
-  resendVerificationCode?: (email: string) => void | Promise<void>
 }
 
 const errorMessages = {
@@ -40,87 +47,241 @@ const errorMessages = {
   },
 } as const
 
-const SignupPage = ({
-  error = null,
-  verifyVerificationCode,
-  resendVerificationCode,
-}: SignupPageProps) => {
+const VERIFICATION_CODE_EXPIRES_IN = 300
+
+const SignupPage = ({ error = null }: SignupPageProps) => {
   const navigate = useNavigate()
   const selectedError = error ? errorMessages[error] : null
   const [currentStep, setCurrentStep] = useState(1)
   const [email, setEmail] = useState('')
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
-
-  const handleNext = () => {
-    if (!isEmailValid) return
-
-    setCurrentStep((step) => Math.min(step + 1, 5))
-  }
-
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
   const [verificationTimerKey, setVerificationTimerKey] = useState(0)
   const [isVerificationCodeError, setIsVerificationCodeError] = useState(false)
-  const [agreements, setAgreements] = useState([false, false, false])
+  const [isEmailEditing, setIsEmailEditing] = useState(false)
+  const [signupSessionId, setSignupSessionId] = useState('')
+  // 현재 세션이 어떤 이메일로 만들어졌는지 기억해 수정 여부를 비교합니다.
+  const [signupSessionEmail, setSignupSessionEmail] = useState('')
+  const [requestError, setRequestError] = useState('')
+  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false)
+  const [isSubmittingVerification, setIsSubmittingVerification] = useState(false)
+  const [isSendingVerification, setIsSendingVerification] = useState(false)
+  const [isSubmittingTerms, setIsSubmittingTerms] = useState(false)
+  const [completedUser, setCompletedUser] = useState<AuthUser | null>(null)
+  const [isEmailVerified, setIsEmailVerified] = useState(false)
+  const [verificationExpiresIn, setVerificationExpiresIn] = useState(
+    VERIFICATION_CODE_EXPIRES_IN,
+  )
+  const [resendCountdown, setResendCountdown] = useState(0)
+  const [signupTerms, setSignupTerms] = useState<SignupTerm[]>([])
+  const [agreements, setAgreements] = useState<Record<string, boolean>>({})
+  // 필수 약관을 먼저 보여주고, 선택 약관 중 마케팅 동의는 마지막에 배치합니다.
+  const orderedSignupTerms = [...signupTerms].sort((left, right) => {
+    if (left.required !== right.required) return left.required ? -1 : 1
+
+    const leftIsMarketing =
+      left.code.toLowerCase().includes('marketing') || left.title.includes('마케팅')
+    const rightIsMarketing =
+      right.code.toLowerCase().includes('marketing') || right.title.includes('마케팅')
+
+    return Number(leftIsMarketing) - Number(rightIsMarketing)
+  })
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+
+  // 서버가 재발송을 허용하기까지 남은 시간을 초 단위로 표시합니다.
+  useEffect(() => {
+    if (resendCountdown <= 0) return
+
+    const timerId = window.setTimeout(() => {
+      setResendCountdown((seconds) => Math.max(seconds - 1, 0))
+    }, 1000)
+
+    return () => window.clearTimeout(timerId)
+  }, [resendCountdown])
+
+  const handleNext = async () => {
+    if (!isEmailValid) return
+
+    setRequestError('')
+
+    try {
+      const normalizedEmail = email.trim()
+      const result = await startSignup(normalizedEmail)
+      setSignupSessionId(result.signupSessionId)
+      setSignupSessionEmail(normalizedEmail)
+      setCurrentStep(2)
+    } catch (error) {
+      setRequestError(
+        error instanceof Error ? error.message : '회원가입을 시작하지 못했습니다.',
+      )
+    }
+  }
 
   const canContinue =
     isEmailValid &&
-    password.length >= 8 &&
+    password.length >= 12 &&
     /[A-Za-z]/.test(password) &&
     /[^\p{L}\p{N}\s]/u.test(password) &&
     password === passwordConfirm
 
-  const handlePasswordNext = () => {
-    if (!canContinue) return
+  const handlePasswordNext = async () => {
+    if (!canContinue || !signupSessionId || isSubmittingPassword) return
 
-    setCurrentStep((step) => Math.min(step + 1, 5))
+    setRequestError('')
+    setIsSubmittingPassword(true)
+
+    try {
+      const normalizedEmail = email.trim()
+      let activeSignupSessionId = signupSessionId
+
+      // 이메일을 바꾸지 않았다면 기존 세션을 사용하고, 바뀌었다면 해당 세션의 이메일을 먼저 수정합니다.
+      if (normalizedEmail !== signupSessionEmail) {
+        const result = await updateSignupEmail(signupSessionId, normalizedEmail)
+        activeSignupSessionId = result.signupSessionId
+        setSignupSessionId(activeSignupSessionId)
+        setSignupSessionEmail(result.email)
+        setEmail(result.email)
+      }
+
+      await setSignupPassword({
+        signupSessionId: activeSignupSessionId,
+        password,
+        passwordConfirmation: passwordConfirm,
+      })
+
+      // 비밀번호 설정이 끝나면 세션 ID로 최초 인증 메일을 발송합니다.
+      setVerificationExpiresIn(VERIFICATION_CODE_EXPIRES_IN)
+      setResendCountdown(0)
+      setVerificationCode('')
+      setIsVerificationCodeError(false)
+      setIsEmailVerified(false)
+      setVerificationTimerKey((key) => key + 1)
+      setIsEmailEditing(false)
+      setCurrentStep(3)
+
+      // 발송에 실패해도 인증 화면에서 재전송할 수 있도록 비밀번호 요청과 분리합니다.
+      setIsSendingVerification(true)
+      try {
+        const result = await sendSignupVerificationCode(activeSignupSessionId)
+        setVerificationExpiresIn(result.expiresIn)
+        setResendCountdown(result.resendAfter)
+        setVerificationTimerKey((key) => key + 1)
+      } catch (error) {
+        setRequestError(
+          error instanceof Error ? error.message : '인증 메일을 보내지 못했습니다.',
+        )
+      } finally {
+        setIsSendingVerification(false)
+      }
+    } catch (error) {
+      setRequestError(
+        error instanceof Error
+          ? error.message
+          : '비밀번호를 저장하지 못했습니다. 다시 시도해 주세요.',
+      )
+    } finally {
+      setIsSubmittingPassword(false)
+    }
   }
 
   const handleVerificationNext = async () => {
-    if (verificationCode.length !== 6) return
+    if (verificationCode.length !== 6 || !signupSessionId || isSubmittingVerification) return
 
-    if (verifyVerificationCode) {
-      try {
-        const isValid = await verifyVerificationCode(verificationCode)
-        setIsVerificationCodeError(!isValid)
-        if (!isValid) return
-      } catch {
-        setIsVerificationCodeError(true)
-        return
+    setRequestError('')
+    setIsSubmittingVerification(true)
+
+    try {
+      if (!isEmailVerified) {
+        let result: Awaited<ReturnType<typeof verifySignupEmail>>
+        try {
+          result = await verifySignupEmail(signupSessionId, verificationCode)
+        } catch (error) {
+          setIsVerificationCodeError(true)
+          throw error
+        }
+
+        if (!result.verified) {
+          setIsVerificationCodeError(true)
+          setRequestError('인증 코드를 확인해 주세요.')
+          return
+        }
+        setIsEmailVerified(true)
       }
-    }
 
-    setCurrentStep((step) => Math.min(step + 1, 5))
+      // 화면에 표시할 약관과 제출에 사용할 약관 ID를 서버에서 받습니다.
+      const result = await getSignupTerms()
+      setSignupTerms(result.terms)
+      setAgreements(Object.fromEntries(result.terms.map((term) => [term.id, false])))
+      setCurrentStep(4)
+    } catch (error) {
+      setRequestError(
+        error instanceof Error ? error.message : '인증을 완료하지 못했습니다. 다시 시도해 주세요.',
+      )
+    } finally {
+      setIsSubmittingVerification(false)
+    }
   }
 
   const handleVerificationCodeChange = (code: string) => {
     setVerificationCode(code)
     setIsVerificationCodeError(false)
+    setRequestError('')
   }
 
   const handleVerificationResend = async () => {
-    if (resendVerificationCode) {
-      try {
-        await resendVerificationCode(email)
-      } catch {
-        // 재발송에 실패하면 현재 타이머를 00:00에 두고 다시 시도할 수 있게 합니다.
-        return
-      }
-    }
+    if (!signupSessionId || isSendingVerification || resendCountdown > 0) return
 
-    setVerificationCode('')
-    setIsVerificationCodeError(false)
-    setVerificationTimerKey((key) => key + 1)
+    setRequestError('')
+    setIsSendingVerification(true)
+
+    try {
+      const result = await sendSignupVerificationCode(signupSessionId)
+      setVerificationExpiresIn(result.expiresIn)
+      setResendCountdown(result.resendAfter)
+      setVerificationTimerKey((key) => key + 1)
+      setVerificationCode('')
+      setIsVerificationCodeError(false)
+    } catch (error) {
+      setRequestError(
+        error instanceof Error ? error.message : '인증 메일을 다시 보내지 못했습니다.',
+      )
+    } finally {
+      setIsSendingVerification(false)
+    }
   }
 
-  const allAgreementsAccepted = agreements.every(Boolean)
-  const requiredAgreementsAccepted = agreements[0] && agreements[1]
+  const allAgreementsAccepted =
+    signupTerms.length > 0 && signupTerms.every((term) => agreements[term.id])
+  const requiredAgreementsAccepted =
+    signupTerms.some((term) => term.required) &&
+    signupTerms.every((term) => !term.required || agreements[term.id])
 
-  const handleAgreementChange = (itemNumber: 1 | 2 | 3, checked: boolean) => {
-    setAgreements((current) =>
-      current.map((value, index) => (index === itemNumber - 1 ? checked : value)),
-    )
+  const handleAgreementChange = (termId: string, checked: boolean) => {
+    setAgreements((current) => ({ ...current, [termId]: checked }))
+  }
+
+  const handleCompleteSignup = async () => {
+    if (!requiredAgreementsAccepted || !signupSessionId || isSubmittingTerms) return
+
+    setRequestError('')
+    setIsSubmittingTerms(true)
+
+    try {
+      const consents = signupTerms.map((term) => ({
+        termId: term.id,
+        accepted: Boolean(agreements[term.id]),
+      }))
+      const result = await completeSignup(signupSessionId, consents)
+      setCompletedUser(result.user)
+      setCurrentStep(5)
+    } catch (error) {
+      setRequestError(
+        error instanceof Error ? error.message : '회원가입을 완료하지 못했습니다. 다시 시도해 주세요.',
+      )
+    } finally {
+      setIsSubmittingTerms(false)
+    }
   }
 
   return (
@@ -154,9 +315,9 @@ const SignupPage = ({
                 <div className="flex flex-col gap-[0.625rem] max-md:gap-4">
                   <div className="min-h-[1.25em] text-[clamp(0.75rem,1.11cqw,1rem)] leading-tight">
                     <p
-                      className={`text-[#ef4444] ${selectedError ? `visible ${selectedError.textSize}` : 'invisible'}`}
+                      className={`text-[#ef4444] ${selectedError || requestError ? `visible ${selectedError?.textSize ?? 'text-[clamp(0.75rem,1.11cqw,1rem)]'}` : 'invisible'}`}
                     >
-                      {selectedError?.text ?? '\u00a0'}
+                      {selectedError?.text ?? (requestError || '\u00a0')}
                     </p>
                   </div>
                   <Button name="default" onClick={handleNext}>
@@ -178,7 +339,16 @@ const SignupPage = ({
           {currentStep === 2 && (
             <div className="flex min-h-0 flex-1 flex-col justify-between gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:flex-initial max-md:justify-start max-md:gap-10">
               <div className="flex flex-col gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:gap-8">
-                <EmailEditField value={email} onChange={setEmail} />
+                <EmailEditField
+                  value={email}
+                  onChange={(value) => {
+                    setEmail(value)
+                    setRequestError('')
+                  }}
+                  isEditing={isEmailEditing}
+                  onEdit={() => setIsEmailEditing(true)}
+                  onDone={() => setIsEmailEditing(false)}
+                />
 
                 <div className="flex flex-col gap-[clamp(1rem,1.67cqw,1.5rem)]">
                   <AuthFormField
@@ -203,14 +373,24 @@ const SignupPage = ({
                 </div>
               </div>
 
-              <div className="flex flex-col items-center gap-[clamp(1.5rem,3.33cqw,3rem)] max-md:gap-8">
-                <Button
-                  name={canContinue ? 'default' : 'disabled'}
-                  disabled={!canContinue}
-                  onClick={handlePasswordNext}
-                >
-                  설정하고 계속하기
-                </Button>
+              <div className="flex flex-col items-center">
+                <div className="flex w-full flex-col gap-[0.625rem] max-md:gap-4">
+                  <div className="min-h-[1.25em] text-[clamp(0.75rem,1.11cqw,1rem)] leading-tight">
+                    <p
+                      aria-live="polite"
+                      className={`text-[#ef4444] ${requestError ? 'visible' : 'invisible'}`}
+                    >
+                      {requestError || '\u00a0'}
+                    </p>
+                  </div>
+                  <Button
+                    name={canContinue && !isSubmittingPassword ? 'default' : 'disabled'}
+                    disabled={!canContinue || !signupSessionId || isSubmittingPassword}
+                    onClick={handlePasswordNext}
+                  >
+                    {isSubmittingPassword ? '처리 중...' : '설정하고 계속하기'}
+                  </Button>
+                </div>
                 {/* <AuthActionText
                   message="인증 메일이 오지 않았나요?"
                   linkText="재전송"
@@ -223,7 +403,16 @@ const SignupPage = ({
           {currentStep === 3 && (
             <div className="flex min-h-0 flex-1 flex-col justify-between gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:flex-initial max-md:justify-start max-md:gap-10">
               <div className="flex flex-col gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:gap-8">
-                <EmailEditField value={email} onChange={setEmail} />
+                <EmailEditField
+                  value={email}
+                  onChange={setEmail}
+                  isEditing={false}
+                  onEdit={() => {
+                    setIsEmailEditing(true)
+                    setCurrentStep(2)
+                  }}
+                  onDone={() => setIsEmailEditing(false)}
+                />
               </div>
               <div>
                 <AuthFormField
@@ -231,24 +420,42 @@ const SignupPage = ({
                   label="인증 코드"
                   isVerificationCode
                   isVerificationCodeError={isVerificationCodeError}
+                  verificationDurationSeconds={verificationExpiresIn}
                   value={verificationCode}
                   onVerificationCodeChange={handleVerificationCodeChange}
                   onVerificationExpired={handleVerificationResend}
                 />
+                <p
+                  aria-live="polite"
+                  className={`min-h-[1.25em] text-[clamp(0.75rem,1.11cqw,1rem)] text-[#EF4444] ${requestError ? 'visible' : 'invisible'}`}
+                >
+                  {requestError || '\u00a0'}
+                </p>
               </div>
               <div className="flex flex-col items-center gap-[clamp(1.5rem,3.33cqw,3rem)] max-md:gap-8">
                 <Button
-                  name={verificationCode.length === 6 ? 'default' : 'disabled'}
-                  disabled={verificationCode.length !== 6}
+                  name={verificationCode.length === 6 && !isSubmittingVerification ? 'default' : 'disabled'}
+                  disabled={verificationCode.length !== 6 || isSubmittingVerification}
                   onClick={handleVerificationNext}
                 >
-                  인증하고 계속하기
+                  {isSubmittingVerification
+                    ? isEmailVerified
+                      ? '약관 불러오는 중...'
+                      : '확인 중...'
+                    : '인증하고 계속하기'}
                 </Button>
                 <AuthActionText
-                  message="인증 메일이 오지 않았나요?"
-                  linkText="재전송"
+                  message={isSendingVerification ? '인증 메일을 보내고 있어요.' : '인증 메일이 오지 않았나요?'}
+                  linkText={
+                    resendCountdown > 0
+                      ? `재전송 (${resendCountdown}초 후)`
+                      : isSendingVerification
+                        ? '전송 중'
+                        : '재전송'
+                  }
                   variant="regular"
                   onClick={handleVerificationResend}
+                  disabled={resendCountdown > 0 || isSendingVerification}
                 />
               </div>
             </div>
@@ -260,33 +467,37 @@ const SignupPage = ({
                 <TermsAgreement
                   variant="all"
                   checked={allAgreementsAccepted}
-                  onChange={(checked) => setAgreements([checked, checked, checked])}
+                  onChange={(checked) =>
+                    setAgreements(Object.fromEntries(signupTerms.map((term) => [term.id, checked])))
+                  }
                 />
                 <div className="border-y border-[#ECECEC] py-[clamp(0.5rem,1.11cqw,1rem)]">
                   <div className="flex flex-col gap-[1.6875rem]">
-                    {([1, 2, 3] as const).map((itemNumber) => (
+                    {orderedSignupTerms.map((term) => (
                       <TermsAgreement
-                        key={itemNumber}
+                        key={term.id}
                         variant="default"
-                        itemNumber={itemNumber}
-                        checked={agreements[itemNumber - 1]}
-                        onChange={(checked) => handleAgreementChange(itemNumber, checked)}
+                        term={term}
+                        checked={Boolean(agreements[term.id])}
+                        onChange={(checked) => handleAgreementChange(term.id, checked)}
                       />
                     ))}
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col items-center gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:gap-8">
-                <Button
-                  name={requiredAgreementsAccepted ? 'default' : 'disabled'}
-                  disabled={!requiredAgreementsAccepted}
-                  onClick={() => {
-                    if (requiredAgreementsAccepted) {
-                      setCurrentStep((step) => Math.min(step + 1, 5))
-                    }
-                  }}
+              <div className="flex flex-col items-center gap-[clamp(0.625rem,1.11cqw,1rem)]">
+                <p
+                  aria-live="polite"
+                  className={`min-h-[1.25em] text-center text-[clamp(0.75rem,1.11cqw,1rem)] text-[#EF4444] ${requestError ? 'visible' : 'invisible'}`}
                 >
-                  동의하고 계속하기
+                  {requestError || '\u00a0'}
+                </p>
+                <Button
+                  name={requiredAgreementsAccepted && !isSubmittingTerms ? 'default' : 'disabled'}
+                  disabled={!requiredAgreementsAccepted || isSubmittingTerms}
+                  onClick={handleCompleteSignup}
+                >
+                  {isSubmittingTerms ? '가입 중...' : '동의하고 계속하기'}
                 </Button>
                 <p className="text-center text-[clamp(0.75rem,1.11cqw,1rem)] text-[#B0B0B0]">
                   필수 약관에 동의하면 계속 할 수 있어요
@@ -321,12 +532,18 @@ const SignupPage = ({
                 </p>
               </div>
               <Button
-                onClick={() =>
+                disabled={!completedUser}
+                onClick={() => {
+                  if (!completedUser) return
                   navigate('/teams', {
                     replace: true,
-                    state: { accountName: email.trim().split('@')[0] },
+                    state: {
+                      accountName: completedUser.nickname,
+                      email: completedUser.email,
+                      user: completedUser,
+                    },
                   })
-                }
+                }}
               >
                 메인으로 가기
               </Button>
