@@ -29,6 +29,12 @@ import scenespectLogoFull from '../assets/logos/scenespect-logo-full.svg'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { AuthUser } from '../services/auth'
+import { getApiErrorMessage } from '../services/api'
+import {
+  checkTeamNameAvailability,
+  createTeam as createTeamRequest,
+  getTeams,
+} from '../services/teams'
 
 type SignupError = 'invalidCredentials' | 'alreadyRegistered'
 
@@ -69,6 +75,8 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
   const [isSendingVerification, setIsSendingVerification] = useState(false)
   const [isSubmittingTerms, setIsSubmittingTerms] = useState(false)
   const [completedUser, setCompletedUser] = useState<AuthUser | null>(null)
+  const [isPreparingTeam, setIsPreparingTeam] = useState(false)
+  const [teamSetupError, setTeamSetupError] = useState('')
   const [isEmailVerified, setIsEmailVerified] = useState(false)
   const [verificationExpiresIn, setVerificationExpiresIn] = useState(
     VERIFICATION_CODE_EXPIRES_IN,
@@ -281,6 +289,50 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
       )
     } finally {
       setIsSubmittingTerms(false)
+    }
+  }
+
+  const handleOpenTeams = async () => {
+    if (!completedUser || isPreparingTeam) return
+
+    setIsPreparingTeam(true)
+    setTeamSetupError('')
+    try {
+      const accountName =
+        completedUser.nickname.trim() ||
+        completedUser.username.trim() ||
+        completedUser.email.split('@')[0]
+      const teamName = `${accountName}의 팀`
+      const { teams } = await getTeams()
+      const alreadyCreated = teams.some((team) => team.name === teamName)
+
+      if (!alreadyCreated) {
+        const availability = await checkTeamNameAvailability(teamName)
+        if (!availability.available) {
+          throw new Error('기본 팀 이름을 사용할 수 없습니다. 팀 목록에서 직접 만들어 주세요.')
+        }
+
+        const { team } = await createTeamRequest({ name: teamName, description: '' })
+        if (team.joinCode) {
+          sessionStorage.setItem(`scenespect.team.${team.id}.joinCode`, team.joinCode)
+        }
+      }
+
+      navigate('/teams', {
+        replace: true,
+        state: {
+          accountName,
+          email: completedUser.email,
+          user: completedUser,
+        },
+      })
+    } catch (error) {
+      console.error('[API] 가입 후 기본 팀 준비 실패', error)
+      setTeamSetupError(
+        getApiErrorMessage(error, '기본 팀을 준비하지 못했습니다. 다시 시도해 주세요.'),
+      )
+    } finally {
+      setIsPreparingTeam(false)
     }
   }
 
@@ -531,21 +583,13 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
                   이제 영상 분석을 시작해보세요.
                 </p>
               </div>
-              <Button
-                disabled={!completedUser}
-                onClick={() => {
-                  if (!completedUser) return
-                  navigate('/teams', {
-                    replace: true,
-                    state: {
-                      accountName: completedUser.nickname,
-                      email: completedUser.email,
-                      user: completedUser,
-                    },
-                  })
-                }}
-              >
-                메인으로 가기
+              {teamSetupError && (
+                <p role="alert" className="w-full text-center text-[14px] text-[#dc2626]">
+                  {teamSetupError}
+                </p>
+              )}
+              <Button disabled={!completedUser || isPreparingTeam} onClick={handleOpenTeams}>
+                {isPreparingTeam ? '팀 준비 중...' : '메인으로 가기'}
               </Button>
             </div>
           )}
