@@ -64,6 +64,7 @@ export default function ProjectSettingsDialog({
   if (!open) return null
 
   const changeView = (next: 'info' | 'approval', focusTab = false) => {
+    if (saving) return
     setView(next)
     if (focusTab) {
       if (next === 'info') infoTabRef.current?.focus()
@@ -119,6 +120,7 @@ export default function ProjectSettingsDialog({
           aria-label="프로젝트 설정 항목"
           className="flex min-h-[46px] gap-[29px]"
           onKeyDown={(event) => {
+            if (saving) return
             if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
             event.preventDefault()
             const next =
@@ -140,8 +142,9 @@ export default function ProjectSettingsDialog({
             aria-selected={view === 'info'}
             aria-controls={view === 'info' ? `${id}-panel` : undefined}
             tabIndex={view === 'info' ? 0 : -1}
+            disabled={saving}
             onClick={() => changeView('info')}
-            className={`w-[102px] cursor-pointer border-b-[2px] text-[16px] ${view === 'info' ? 'border-[#2563eb] font-semibold text-[#2563eb]' : 'border-transparent font-medium text-[#6b7280]'} ${commonStyles.focus}`}
+            className={`w-[102px] cursor-pointer border-b-[2px] text-[16px] disabled:cursor-wait ${view === 'info' ? 'border-[#2563eb] font-semibold text-[#2563eb]' : 'border-transparent font-medium text-[#6b7280]'} ${commonStyles.focus}`}
           >
             기본 정보
           </button>
@@ -153,8 +156,9 @@ export default function ProjectSettingsDialog({
             aria-selected={view === 'approval'}
             aria-controls={view === 'approval' ? `${id}-panel` : undefined}
             tabIndex={view === 'approval' ? 0 : -1}
+            disabled={saving}
             onClick={() => changeView('approval')}
-            className={`w-[125px] cursor-pointer border-b-[2px] text-[16px] ${view === 'approval' ? 'border-[#2563eb] font-semibold text-[#2563eb]' : 'border-transparent font-medium text-[#6b7280]'} ${commonStyles.focus}`}
+            className={`w-[125px] cursor-pointer border-b-[2px] text-[16px] disabled:cursor-wait ${view === 'approval' ? 'border-[#2563eb] font-semibold text-[#2563eb]' : 'border-transparent font-medium text-[#6b7280]'} ${commonStyles.focus}`}
           >
             승인 및 관리
           </button>
@@ -187,20 +191,22 @@ export default function ProjectSettingsDialog({
                 <input
                   ref={imageInputRef}
                   type="file"
+                  disabled={saving}
                   accept="image/*"
                   aria-label="프로젝트 대표 이미지 선택"
                   tabIndex={-1}
                   className="sr-only"
                   onChange={(event) => {
                     const file = event.target.files?.[0]
-                    if (file) onImageChange(file)
+                    if (file && !saving) onImageChange(file)
                     event.target.value = ''
                   }}
                 />
                 <button
                   type="button"
+                  disabled={saving}
                   onClick={() => imageInputRef.current?.click()}
-                  className={`h-[40px] w-[100px] shrink-0 cursor-pointer rounded-[8px] border border-[#e3e6eb] text-[14px] font-semibold ${commonStyles.focus}`}
+                  className={`h-[40px] w-[100px] shrink-0 cursor-pointer rounded-[8px] border border-[#e3e6eb] text-[14px] font-semibold disabled:cursor-wait ${commonStyles.focus}`}
                 >
                   변경
                 </button>
@@ -210,6 +216,7 @@ export default function ProjectSettingsDialog({
                 <input
                   name="project-name"
                   value={value.name}
+                  disabled={saving}
                   onChange={(event) => {
                     setNameError('')
                     onChange({ ...value, name: event.target.value })
@@ -217,7 +224,7 @@ export default function ProjectSettingsDialog({
                   aria-invalid={Boolean(nameError)}
                   aria-describedby={nameError ? `${id}-name-error` : undefined}
                   placeholder="프로젝트 이름"
-                  className={`h-[48px] w-full rounded-[6px] border border-[#e3e6eb] px-[14px] text-[14px] font-normal placeholder:text-[#6b7280] ${commonStyles.focus}`}
+                  className={`h-[48px] w-full rounded-[6px] border border-[#e3e6eb] px-[14px] text-[14px] font-normal placeholder:text-[#6b7280] disabled:cursor-wait ${commonStyles.focus}`}
                 />
                 {nameError && (
                   <span id={`${id}-name-error`} role="alert" className="text-[12px] text-[#e64c50]">
@@ -229,10 +236,11 @@ export default function ProjectSettingsDialog({
                 프로젝트 설명
                 <textarea
                   value={value.description}
+                  disabled={saving}
                   onChange={(event) => onChange({ ...value, description: event.target.value })}
                   placeholder="프로젝트 설명"
                   rows={2}
-                  className={`h-[74px] w-full resize-y rounded-[6px] border border-[#e3e6eb] px-[14px] py-[12px] text-[14px] font-normal placeholder:text-[#6b7280] ${commonStyles.focus}`}
+                  className={`h-[74px] w-full resize-y rounded-[6px] border border-[#e3e6eb] px-[14px] py-[12px] text-[14px] font-normal placeholder:text-[#6b7280] disabled:cursor-wait ${commonStyles.focus}`}
                 />
               </label>
               <div className="grid gap-[20px] sm:grid-cols-2">
@@ -322,7 +330,7 @@ export default function ProjectSettingsDialog({
           </span>
         </div>
         <div className="h-px shrink-0 bg-[#e3e6eb]" aria-hidden="true" />
-        {saveError && view === 'info' && (
+        {saveError && (
           <p role="alert" className="text-[13px] text-[#e64c50]">
             {saveError}
           </p>
