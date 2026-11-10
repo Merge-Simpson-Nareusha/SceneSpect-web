@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import AuthActionText from '../components/auth/AuthActionText'
 import AuthFormField from '../components/auth/AuthFormField'
 import Button from '../components/auth/Button'
@@ -7,20 +8,37 @@ import SocialLoginButton from '../components/auth/SocialLoginButton'
 import authImage from '../assets/images/auth/auth-side-visual.png'
 import scenespectLogoLight from '../assets/logos/scenespect-logo-light.svg'
 import scenespectLogoSymbol from '../assets/logos/scenespect-logo-symbol.svg'
+import { ApiError, getApiErrorMessage } from '../services/api'
+import { login } from '../services/auth'
 
 function LoginPage() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    if (submitting) return
     if (!email.trim() || !password) {
       setLoginError('이메일 또는 비밀번호를 입력해 주세요.')
       return
     }
 
-    // 서버 연결 전 임시로 로그인 실패 상태를 표시합니다.
-    setLoginError('이메일 또는 비밀번호를 확인해 주세요.')
+    setSubmitting(true)
+    setLoginError('')
+    try {
+      const user = await login(email.trim(), password)
+      navigate('/teams', { replace: true, state: { accountName: user.nickname } })
+    } catch (error) {
+      setLoginError(
+        error instanceof ApiError && error.status === 401
+          ? '이메일 또는 비밀번호를 확인해 주세요.'
+          : getApiErrorMessage(error, '로그인에 실패했습니다. 잠시 후 다시 시도해 주세요.'),
+      )
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -91,7 +109,9 @@ function LoginPage() {
                 >
                   {loginError || '\u00a0'}
                 </p>
-                <Button onClick={handleLogin}>로그인하기</Button>
+                <Button onClick={handleLogin} disabled={submitting}>
+                  {submitting ? '로그인 중...' : '로그인하기'}
+                </Button>
               </div>
               <FormDivider label="소셜계정으로 로그인" />
               <div className="grid grid-cols-2 gap-[clamp(0.5rem,0.69cqw,0.625rem)] max-md:gap-3">

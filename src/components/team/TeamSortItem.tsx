@@ -23,15 +23,15 @@ export default function TeamSortItem({
       type="button"
       role="menuitemradio"
       aria-checked={selected}
-      className={`flex h-[57px] w-full cursor-pointer items-center justify-between rounded-[10px] px-[12px] text-left text-[22px] leading-[normal] font-medium disabled:cursor-not-allowed disabled:opacity-50 ${selected ? 'bg-[#eaf1ff] text-[#2563eb]' : 'text-[#16181d] focus-visible:bg-[#f3f7ff] enabled:hover:bg-[#f3f7ff]'} ${commonStyles.focus} ${className}`}
+      className={`flex h-[44px] w-full cursor-pointer items-center justify-between rounded-[8px] px-[8px] text-left text-[16px] leading-[normal] font-medium disabled:cursor-not-allowed disabled:opacity-50 ${selected ? 'bg-[#eaf1ff] text-[#2563eb]' : 'text-[#16181d] focus-visible:bg-[#f3f7ff] enabled:hover:bg-[#f3f7ff]'} ${commonStyles.focus} ${className}`}
     >
-      <span className="flex items-center gap-[12px]">
+      <span className="flex items-center gap-[8px]">
         <TeamSortIcon sort={sort} selected={selected} />
         {option.label}
       </span>
       {selected && (
-        <span className="relative h-[14px] w-[20px] shrink-0" aria-hidden="true">
-          <img src={check} alt="" className="absolute -top-[1px] -left-[1px] max-w-none" />
+        <span className="relative h-[12px] w-[16px] shrink-0" aria-hidden="true">
+          <img src={check} alt="" className="absolute -top-[1px] -left-[1px] h-[12px] w-[16px] max-w-none" />
         </span>
       )}
     </button>

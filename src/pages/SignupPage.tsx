@@ -27,6 +27,13 @@ import completionIcon from '../assets/icons/signup/signup-complete.svg'
 import scenespectLogoFull from '../assets/logos/scenespect-logo-full.svg'
 
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
+import type { AuthUser } from '../services/auth'
+import { getApiErrorMessage } from '../services/api'
+import {
+  createTeam as createTeamRequest,
+  getTeams,
+} from '../services/teams'
 
 type SignupError = 'invalidCredentials' | 'alreadyRegistered'
 
@@ -48,6 +55,7 @@ const errorMessages = {
 const VERIFICATION_CODE_EXPIRES_IN = 300
 
 const SignupPage = ({ error = null }: SignupPageProps) => {
+  const navigate = useNavigate()
   const selectedError = error ? errorMessages[error] : null
   const [currentStep, setCurrentStep] = useState(1)
   const [email, setEmail] = useState('')
@@ -65,6 +73,9 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
   const [isSubmittingVerification, setIsSubmittingVerification] = useState(false)
   const [isSendingVerification, setIsSendingVerification] = useState(false)
   const [isSubmittingTerms, setIsSubmittingTerms] = useState(false)
+  const [completedUser, setCompletedUser] = useState<AuthUser | null>(null)
+  const [isPreparingTeam, setIsPreparingTeam] = useState(false)
+  const [teamSetupError, setTeamSetupError] = useState('')
   const [isEmailVerified, setIsEmailVerified] = useState(false)
   const [verificationExpiresIn, setVerificationExpiresIn] = useState(
     VERIFICATION_CODE_EXPIRES_IN,
@@ -268,7 +279,8 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
         termId: term.id,
         accepted: Boolean(agreements[term.id]),
       }))
-      await completeSignup(signupSessionId, consents)
+      const result = await completeSignup(signupSessionId, consents)
+      setCompletedUser(result.user)
       setCurrentStep(5)
     } catch (error) {
       setRequestError(
@@ -276,6 +288,45 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
       )
     } finally {
       setIsSubmittingTerms(false)
+    }
+  }
+
+  const handleOpenTeams = async () => {
+    if (!completedUser || isPreparingTeam) return
+
+    setIsPreparingTeam(true)
+    setTeamSetupError('')
+    try {
+      const accountName =
+        completedUser.nickname.trim() ||
+        completedUser.username.trim() ||
+        completedUser.email.split('@')[0]
+      const teamName = `${accountName}의 팀`
+      const { teams } = await getTeams()
+      const alreadyCreated = teams.some((team) => team.name === teamName)
+
+      if (!alreadyCreated) {
+        const { team } = await createTeamRequest({ name: teamName, description: '' })
+        if (team.joinCode) {
+          sessionStorage.setItem(`scenespect.team.${team.id}.joinCode`, team.joinCode)
+        }
+      }
+
+      navigate('/teams', {
+        replace: true,
+        state: {
+          accountName,
+          email: completedUser.email,
+          user: completedUser,
+        },
+      })
+    } catch (error) {
+      console.error('[API] 가입 후 기본 팀 준비 실패', error)
+      setTeamSetupError(
+        getApiErrorMessage(error, '기본 팀을 준비하지 못했습니다. 다시 시도해 주세요.'),
+      )
+    } finally {
+      setIsPreparingTeam(false)
     }
   }
 
@@ -526,7 +577,14 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
                   이제 영상 분석을 시작해보세요.
                 </p>
               </div>
-              <Button>메인으로 가기</Button>
+              {teamSetupError && (
+                <p role="alert" className="w-full text-center text-[14px] text-[#dc2626]">
+                  {teamSetupError}
+                </p>
+              )}
+              <Button disabled={!completedUser || isPreparingTeam} onClick={handleOpenTeams}>
+                {isPreparingTeam ? '팀 준비 중...' : '메인으로 가기'}
+              </Button>
             </div>
           )}
         </div>

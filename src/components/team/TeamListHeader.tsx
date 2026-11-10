@@ -19,10 +19,12 @@ export default function TeamListHeader({
 }: TeamListHeaderProps) {
   return (
     <header
-      className={`flex w-full items-start justify-between gap-[24px] px-[70px] py-[30px] text-[#16181d] ${className}`}
+      className={`flex w-full items-start justify-between gap-[24px] px-[70px] py-[16px] text-[#16181d] ${className}`}
     >
-      <h2 className="text-[40px] leading-[normal] font-semibold tracking-[-0.04em]">{title}</h2>
-      <div className="flex shrink-0 items-center gap-[20px]">
+      <h2 className="text-[32px] leading-[normal] font-semibold tracking-[-0.04em] max-md:text-[28px] max-sm:text-[24px]">
+        {title}
+      </h2>
+      <div className="flex shrink-0 items-center gap-[16px] max-md:gap-3">
         <TeamSortButton value={sort} onChange={onSortChange} />
         <TeamCreateButton onClick={onCreate} />
       </div>
