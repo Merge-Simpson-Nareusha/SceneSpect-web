@@ -57,7 +57,7 @@ export default function TeamCard({
       </div>
       <div className="pointer-events-none flex min-h-0 flex-1 flex-col justify-between px-[18px] pb-[18px]">
         <div className="flex min-w-0 flex-col gap-[2px] leading-[normal] tracking-[-0.04em]">
-          <h3 className="truncate text-[32px] font-medium" title={name}>
+          <h3 className="truncate text-[32px] font-medium max-sm:text-[26px]" title={name}>
             {name}
           </h3>
           <p className="line-clamp-2 text-[16px]" title={description}>

@@ -320,7 +320,16 @@ const SignupPage = ({
                   이제 영상 분석을 시작해보세요.
                 </p>
               </div>
-              <Button onClick={() => navigate('/teams', { replace: true })}>메인으로 가기</Button>
+              <Button
+                onClick={() =>
+                  navigate('/teams', {
+                    replace: true,
+                    state: { accountName: email.trim().split('@')[0] },
+                  })
+                }
+              >
+                메인으로 가기
+              </Button>
             </div>
           )}
         </div>

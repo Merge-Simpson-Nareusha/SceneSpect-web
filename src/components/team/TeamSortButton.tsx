@@ -75,7 +75,7 @@ export default function TeamSortButton({ value, onChange }: TeamSortButtonProps)
           ref={menuRef}
           id={menuId}
           value={value}
-          className="absolute top-[calc(100%+8px)] left-1/2 z-30 -translate-x-1/2"
+          className="absolute top-[calc(100%+8px)] left-1/2 z-30 -translate-x-1/2 max-md:left-0 max-md:translate-x-0"
           onChange={(next) => {
             onChange(next)
             setOpen(false)
