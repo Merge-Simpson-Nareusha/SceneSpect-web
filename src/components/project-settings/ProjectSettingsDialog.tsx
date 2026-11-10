@@ -41,6 +41,7 @@ export default function ProjectSettingsDialog({
   const imageInputRef = useRef<HTMLInputElement>(null)
   const infoTabRef = useRef<HTMLButtonElement>(null)
   const approvalTabRef = useRef<HTMLButtonElement>(null)
+  const saveErrorRef = useRef<HTMLParagraphElement>(null)
   const [view, setView] = useState(initialView)
   const [nameError, setNameError] = useState('')
   const id = useId()
@@ -60,6 +61,10 @@ export default function ProjectSettingsDialog({
       if (previousFocus?.isConnected) previousFocus.focus()
     }
   }, [open])
+
+  useEffect(() => {
+    if (open && saveError) saveErrorRef.current?.focus()
+  }, [open, saveError])
 
   if (!open) return null
 
@@ -331,7 +336,7 @@ export default function ProjectSettingsDialog({
         </div>
         <div className="h-px shrink-0 bg-[#e3e6eb]" aria-hidden="true" />
         {saveError && (
-          <p role="alert" className="text-[13px] text-[#e64c50]">
+          <p ref={saveErrorRef} role="alert" tabIndex={-1} className="text-[13px] text-[#e64c50]">
             {saveError}
           </p>
         )}
