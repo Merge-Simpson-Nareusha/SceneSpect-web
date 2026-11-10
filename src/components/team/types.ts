@@ -4,8 +4,18 @@ export type TeamMember = {
   id: string
   name: string
   role: string
+  apiRole?: 'LEADER' | 'DEPUTY' | 'MEMBER'
+  canCreateProjects?: boolean
+  warningCount?: number
   showMenu?: boolean
   avatarSrc?: string
+}
+
+export type TeamJoinRequest = {
+  id: string
+  userId: string
+  nickname: string
+  createdAt: string
 }
 
 export type TeamDetails = {
