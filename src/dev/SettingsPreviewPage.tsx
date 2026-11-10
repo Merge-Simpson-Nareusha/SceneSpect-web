@@ -26,6 +26,7 @@ export default function SettingsPreviewPage() {
           <a href="?preview=intro">01 소개 보기</a>
           <a href="?preview=team">03 팀 관리 보기</a>
           <a href="?preview=project">04 프로젝트 보기</a>
+          <a href="?preview=work">06 프로젝트 작업 보기</a>
         </nav>
         <p role="status" className="min-h-[20px] text-[14px] text-[#838a94]">
           {message}
