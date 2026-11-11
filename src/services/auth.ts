@@ -14,10 +14,21 @@ export type AuthUser = {
   username: string
   nickname: string
   avatarUrl?: string
+  displayTheme?: string
+  role?: string
+  status?: string
+  emailVerified?: boolean
+  createdAt?: string
 }
 
-type LoginResponse = { accessToken: string; user: AuthUser }
+type LoginResponse = {
+  accessToken: string
+  tokenType: 'Bearer'
+  expiresIn: number
+  user: AuthUser
+}
 type CurrentUserResponse = { user: AuthUser }
+type PasswordResetRequestResponse = { message: string }
 
 const USER_CACHE_KEY = 'scenespect.user'
 
@@ -298,6 +309,14 @@ export async function login(loginId: string, password: string) {
   setAccessToken(response.accessToken)
   sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify(response.user))
   return response.user
+}
+
+export async function requestPasswordReset(email: string) {
+  return apiRequest<PasswordResetRequestResponse>('/api/v1/auth/password/forgot', {
+    method: 'POST',
+    authenticated: false,
+    body: { email },
+  })
 }
 
 export async function getCurrentUser() {
