@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useNavigate } from 'react-router'
 import AuthActionText from '../components/auth/AuthActionText'
 import AuthFormField from '../components/auth/AuthFormField'
@@ -10,9 +10,11 @@ import scenespectLogoLight from '../assets/logos/scenespect-logo-light.svg'
 import scenespectLogoSymbol from '../assets/logos/scenespect-logo-symbol.svg'
 import { ApiError, getApiErrorMessage } from '../services/api'
 import { login } from '../services/auth'
+import InlineFeedback from '../components/feedback/InlineFeedback'
 
 function LoginPage() {
   const navigate = useNavigate()
+  const errorId = useId()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
@@ -42,7 +44,7 @@ function LoginPage() {
   }
 
   return (
-    <div className="@container login-page mx-auto flex h-svh w-full max-w-[2560px]">
+    <main className="login-page @container mx-auto flex h-svh w-full max-w-[2560px]">
       <div className="login-page-layout flex h-full w-full gap-[2.78cqw] px-[2.78cqw] py-[4.44svh] max-md:flex-col max-md:gap-0 max-md:px-5 max-md:py-6">
         <div className="login-page-visual flex w-[45%] shrink-0 items-center justify-center max-md:hidden">
           <img src={authImage} alt="" className="h-full w-full object-contain" />
@@ -62,7 +64,7 @@ function LoginPage() {
                   alt="SceneSpect"
                   className="h-[clamp(2rem,4.44cqw,4rem)] w-auto object-contain"
                 />
-                <h1 className="whitespace-nowrap text-[clamp(1.5rem,3.47cqw,3.125rem)] font-semibold text-[#16181D]">
+                <h1 className="text-[clamp(1.5rem,3.47cqw,3.125rem)] font-semibold whitespace-nowrap text-[#16181D]">
                   다시하기
                 </h1>
               </div>
@@ -76,6 +78,7 @@ function LoginPage() {
                 labelActionText="이메일 찾기"
                 placeholder="example@email.com"
                 required
+                aria-describedby={loginError ? errorId : undefined}
                 autoComplete="email"
                 value={email}
                 onChange={(event) => {
@@ -90,6 +93,7 @@ function LoginPage() {
                 type="password"
                 placeholder="비밀번호를 입력해주세요"
                 required
+                aria-describedby={loginError ? errorId : undefined}
                 autoComplete="current-password"
                 showPasswordToggle
                 value={password}
@@ -102,13 +106,9 @@ function LoginPage() {
 
             <div className="login-page-actions flex flex-col">
               <div className="flex flex-col gap-[10px]">
-                <p
-                  aria-live="polite"
-                  aria-atomic="true"
-                  className={`min-h-[1.2em] max-md:min-h-[2.4em] text-[16px] leading-[1.2] text-[#EF4444] ${loginError ? 'visible' : 'invisible'}`}
-                >
-                  {loginError || '\u00a0'}
-                </p>
+                <div className="min-h-[24px]">
+                  <InlineFeedback id={errorId} message={loginError} variant="inline" />
+                </div>
                 <Button onClick={handleLogin} disabled={submitting}>
                   {submitting ? '로그인 중...' : '로그인하기'}
                 </Button>
@@ -126,7 +126,7 @@ function LoginPage() {
           </div>
         </section>
       </div>
-    </div>
+    </main>
   )
 }
 

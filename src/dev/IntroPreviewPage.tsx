@@ -4,6 +4,7 @@ import playIcon from '../assets/icons/media/play.svg'
 import playHoverIcon from '../assets/icons/media/play-hover.svg'
 import pauseIcon from '../assets/icons/media/pause.svg'
 import pauseHoverIcon from '../assets/icons/media/pause-hover.svg'
+import ErrorState from '../components/feedback/ErrorState'
 
 const examples = [
   { label: '재생 · Default', src: playIcon },
@@ -142,9 +143,22 @@ export default function IntroPreviewPage() {
           </div>
         </div>
         {error && (
-          <p role="alert" className="text-[14px] text-[#ef4444]">
-            {error}
-          </p>
+          <ErrorState
+            size="compact"
+            icon="video"
+            title="영상을 불러오지 못했어요"
+            description={error}
+            actions={[
+              {
+                label: '다시 불러오기',
+                onClick: () => {
+                  setError('')
+                  setReady(false)
+                  videoRef.current?.load()
+                },
+              },
+            ]}
+          />
         )}
       </section>
       <a href="?preview=common" className="text-[14px] text-[#2962ff] underline underline-offset-4">

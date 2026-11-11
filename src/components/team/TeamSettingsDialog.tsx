@@ -7,6 +7,7 @@ import close from '../../assets/icons/team/close.svg'
 import edit from '../../assets/icons/team/avatar-edit.svg'
 import separator from '../../assets/icons/team/separator.svg'
 import transferArrow from '../../assets/icons/team/transfer-arrow.svg'
+import InlineFeedback from '../feedback/InlineFeedback'
 
 export type TeamSettingsDialogProps = {
   open: boolean
@@ -97,7 +98,7 @@ function SettingsContent({
 }: Omit<TeamSettingsDialogProps, 'open'>) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const avatarInputRef = useRef<HTMLInputElement>(null)
-  const saveErrorRef = useRef<HTMLParagraphElement>(null)
+  const saveErrorRef = useRef<HTMLDivElement>(null)
   const footerRef = useRef<HTMLElement>(null)
   const [initialValue] = useState(value)
   const [view, setView] = useState(initialView)
@@ -151,7 +152,9 @@ function SettingsContent({
   const requestClose = () => {
     if (saving) return
     if (hasUnsavedChanges) {
-      setCloseNotice('저장되지 않은 변경사항이 있습니다. 변경사항 저장을 눌러 저장한 뒤 닫아 주세요.')
+      setCloseNotice(
+        '저장되지 않은 변경사항이 있습니다. 변경사항 저장을 눌러 저장한 뒤 닫아 주세요.',
+      )
       window.requestAnimationFrame(() => {
         footerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
       })
@@ -385,13 +388,11 @@ function SettingsContent({
                     />
                   )}
                   {validationError?.field === field.key && (
-                    <p
+                    <InlineFeedback
                       id={`${id}-${field.key}-error`}
-                      role="alert"
-                      className="text-[14px] leading-[normal] text-[#ef4444]"
-                    >
-                      {validationError.message}
-                    </p>
+                      variant="inline"
+                      message={validationError.message}
+                    />
                   )}
                 </div>
               ))}
@@ -496,35 +497,27 @@ function SettingsContent({
                   <span className="text-[20px] text-black">팀장 이관</span>
                   <span className="text-[14px] text-[#6b7280]">이관 조건은 팀 협의 후 결정</span>
                 </span>
-                <img src={transferArrow} alt="" className="size-[18px] max-w-none -scale-y-100 rotate-180" />
+                <img
+                  src={transferArrow}
+                  alt=""
+                  className="size-[18px] max-w-none -scale-y-100 rotate-180"
+                />
               </button>
               <Divider />
             </div>
           )}
-          {statusMessage && (
-            <p role="status" className="px-[10px] text-[14px] text-[#2563eb]">
-              {statusMessage}
-            </p>
-          )}
-          {saveError && (
-            <p
-              ref={saveErrorRef}
-              role="alert"
-              tabIndex={-1}
-              className={`mx-[10px] rounded-[8px] border border-[#fecaca] bg-[#fef2f2] px-[12px] py-[14px] text-[16px] font-medium text-[#dc2626] ${commonStyles.focus}`}
-            >
-              {saveError}
-            </p>
-          )}
-          {closeNotice && (
-            <p
-              role="alert"
-              className="mx-[10px] rounded-[8px] border border-[#fecaca] bg-[#fef2f2] px-[12px] py-[14px] text-[16px] font-medium text-[#dc2626]"
-            >
-              {closeNotice}
-            </p>
-          )}
-          <footer ref={footerRef} className="flex items-center justify-end gap-[12px] max-sm:flex-col-reverse max-sm:items-stretch">
+          <InlineFeedback message={statusMessage} tone="info" className="mx-[10px]" />
+          <InlineFeedback
+            ref={saveErrorRef}
+            message={saveError}
+            tabIndex={-1}
+            className="mx-[10px]"
+          />
+          <InlineFeedback message={closeNotice} tone="warning" className="mx-[10px]" />
+          <footer
+            ref={footerRef}
+            className="flex items-center justify-end gap-[12px] max-sm:flex-col-reverse max-sm:items-stretch"
+          >
             <button
               type="button"
               disabled={saving}

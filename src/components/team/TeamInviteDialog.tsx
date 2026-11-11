@@ -1,6 +1,9 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { commonStyles } from '../common/styles'
 import TeamCreateButton from './TeamCreateButton'
+import InlineFeedback from '../feedback/InlineFeedback'
+import type { InlineFeedbackProps } from '../feedback/InlineFeedback'
+import { getApiErrorMessage } from '../../services/api'
 
 export type TeamInviteDialogProps = {
   teamName: string
@@ -18,12 +21,21 @@ export default function TeamInviteDialog({
   const dialogRef = useRef<HTMLDialogElement>(null)
   const emailInputId = useId()
   const [email, setEmail] = useState('')
-  const [message, setMessage] = useState('')
+  const [feedback, setFeedback] = useState<{
+    message: string
+    tone: InlineFeedbackProps['tone']
+  } | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const close = () => {
+    if (!submitting) onClose()
+  }
 
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
-    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const previousFocus =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
     dialog.showModal()
     return () => {
       dialog.close()
@@ -34,32 +46,45 @@ export default function TeamInviteDialog({
   const handleInvite = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const normalizedEmail = email.trim().toLowerCase()
-    if (!normalizedEmail) return
+    if (!normalizedEmail || submitting) return
 
     if (!onInviteEmail) {
       console.warn('[API] 이메일 초대 엔드포인트가 제공된 명세에 없어 요청을 보내지 않았습니다.')
       return
     }
 
+    setSubmitting(true)
+    setFeedback(null)
     try {
       const sent = await onInviteEmail(normalizedEmail)
       if (!sent) {
-        setMessage('이 이메일은 이미 팀에 있거나 초대 대기 중입니다.')
+        setFeedback({
+          message: '이 이메일은 이미 팀에 있거나 초대 대기 중입니다.',
+          tone: 'warning',
+        })
         return
       }
       setEmail('')
-      setMessage('초대 메일을 보냈습니다.')
-    } catch {
-      setMessage('초대 메일을 보내지 못했습니다.')
+      setFeedback({ message: '초대 메일을 보냈습니다.', tone: 'success' })
+    } catch (error) {
+      setFeedback({
+        message: getApiErrorMessage(error, '초대 메일을 보내지 못했습니다. 다시 시도해 주세요.'),
+        tone: 'error',
+      })
+    } finally {
+      setSubmitting(false)
     }
   }
 
   const copyCode = async () => {
     try {
       await navigator.clipboard.writeText(teamCode)
-      setMessage('팀 코드를 복사했습니다.')
+      setFeedback({ message: '팀 코드를 복사했습니다.', tone: 'success' })
     } catch {
-      setMessage('코드를 복사할 수 없습니다. 직접 복사해 주세요.')
+      setFeedback({
+        message: '코드를 복사할 수 없습니다. 팀 코드를 선택해 직접 복사해 주세요.',
+        tone: 'error',
+      })
     }
   }
 
@@ -69,7 +94,7 @@ export default function TeamInviteDialog({
       aria-labelledby={`${emailInputId}-title`}
       onCancel={(event) => {
         event.preventDefault()
-        onClose()
+        close()
       }}
       onClick={(event) => {
         if (event.target !== event.currentTarget) return
@@ -80,7 +105,7 @@ export default function TeamInviteDialog({
           event.clientY < bounds.top ||
           event.clientY > bounds.bottom
         )
-          onClose()
+          close()
       }}
       className="m-auto max-h-[calc(100svh-32px)] w-[720px] max-w-[calc(100vw-32px)] overflow-y-auto rounded-[16px] border border-[#e5e7eb] bg-white p-0 text-[#16181d] shadow-xl backdrop:bg-black/40"
     >
@@ -120,41 +145,38 @@ export default function TeamInviteDialog({
               value={email}
               onChange={(event) => {
                 setEmail(event.currentTarget.value)
-                setMessage('')
+                setFeedback(null)
               }}
               placeholder="example@email.com"
-              disabled={!onInviteEmail}
+              disabled={!onInviteEmail || submitting}
+              aria-describedby={feedback ? `${emailInputId}-feedback` : undefined}
               className={`h-12 w-full rounded-lg border border-[#e3e6eb] px-3 text-base font-normal outline-none focus-visible:border-[#2563eb] focus-visible:ring-2 focus-visible:ring-[#2563eb]/20 sm:px-4 sm:text-lg ${commonStyles.focus}`}
             />
-            <div className="h-[28px] overflow-hidden" aria-live="polite">
-              {message && (
-                <p
-                  role="status"
-                  title={message}
-                  className="line-clamp-1 pt-1 text-sm text-[#2563eb]"
-                >
-                  {message}
-                </p>
-              )}
-            </div>
           </section>
         </div>
+
+        <InlineFeedback
+          id={`${emailInputId}-feedback`}
+          message={feedback?.message}
+          tone={feedback?.tone}
+        />
 
         <footer className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
           <button
             type="button"
-            onClick={onClose}
+            onClick={close}
+            disabled={submitting}
             className={`h-11 cursor-pointer rounded-lg border border-[#e3e6eb] px-5 text-sm font-medium hover:bg-[#f6f7f9] ${commonStyles.focus}`}
           >
             닫기
           </button>
           <TeamCreateButton
             type="submit"
-            disabled={!onInviteEmail}
-            title={onInviteEmail ? undefined : '이메일 초대 API가 아직 제공되지 않았습니다'}
+            disabled={!onInviteEmail || submitting}
+            title={onInviteEmail ? undefined : '이메일 초대는 준비 중입니다'}
             className="w-full sm:w-auto"
           >
-            이메일로 초대
+            {submitting ? '초대 보내는 중…' : '이메일로 초대'}
           </TeamCreateButton>
         </footer>
       </form>

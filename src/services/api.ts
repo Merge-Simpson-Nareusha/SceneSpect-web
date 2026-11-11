@@ -1,12 +1,5 @@
-export class ApiError extends Error {
-  status: number
-
-  constructor(message: string, status: number) {
-    super(message)
-    this.name = 'ApiError'
-    this.status = status
-  }
-}
+import { ApiError } from './errors'
+export { ApiError, getApiErrorMessage, getApiErrorKind, getApiErrorStatus } from './errors'
 
 type ApiRequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown
@@ -45,22 +38,25 @@ async function refreshAccessToken(): Promise<string | null> {
     })
 
     if (!response.ok) {
-      accessToken = null
       console.error(`[API] POST /api/v1/auth/token/refresh 요청 실패 (${response.status})`)
-      return null
+      if (response.status === 401 || response.status === 403) {
+        accessToken = null
+        return null
+      }
+      throw new ApiError(await parseError(response), response.status)
     }
 
     const body = (await response.json()) as TokenResponse
     accessToken = body.accessToken
     return accessToken
-  })()
+  })().catch((error: unknown) => {
+    console.error('[API] 액세스 토큰 갱신에 실패했습니다.', error)
+    if (error instanceof ApiError) throw error
+    throw new ApiError('서버에 연결하지 못했습니다. 다시 시도해 주세요.', 0, { cause: error })
+  })
 
   try {
     return await refreshRequest
-  } catch (error) {
-    accessToken = null
-    console.error('[API] 액세스 토큰 갱신에 실패했습니다.', error)
-    return null
   } finally {
     refreshRequest = null
   }
@@ -68,10 +64,15 @@ async function refreshAccessToken(): Promise<string | null> {
 
 async function parseError(response: Response) {
   try {
-    const body = (await response.json()) as { error?: string; message?: string }
-    return body.error ?? body.message ?? `요청에 실패했습니다. (${response.status})`
+    const body: unknown = await response.json()
+    if (typeof body === 'object' && body !== null) {
+      if ('error' in body && typeof body.error === 'string' && body.error.trim()) return body.error
+      if ('message' in body && typeof body.message === 'string' && body.message.trim())
+        return body.message
+    }
+    return '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.'
   } catch {
-    return `요청에 실패했습니다. (${response.status})`
+    return '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.'
   }
 }
 
@@ -119,13 +120,4 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     if (error instanceof ApiError) throw error
     throw new ApiError('서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.', 0)
   }
-}
-
-export function getApiErrorMessage(error: unknown, fallback: string) {
-  if (!(error instanceof ApiError)) return error instanceof Error ? error.message || fallback : fallback
-  if (error.status === 401) return '로그인이 만료되었습니다. 다시 로그인해 주세요.'
-  if (error.status === 403) return '이 작업을 수행할 권한이 없습니다.'
-  if (error.status === 409) return '이미 사용 중인 팀 이름입니다.'
-  if (error.status === 0) return fallback
-  return error.message || fallback
 }

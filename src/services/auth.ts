@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { apiRequest, API_ROOT, setAccessToken } from './api'
+import { apiRequest, API_ROOT, getApiErrorMessage, setAccessToken } from './api'
 
 // 모든 인증 요청은 같은 Axios 설정을 사용합니다.
 // 개발 환경에서는 Vite가 /api 요청을 백엔드 주소로 전달합니다.
@@ -81,22 +81,9 @@ export type SignupCompleteResponse = {
   }
 }
 
-// 서버가 보내준 오류 문구가 있으면 화면에서 사용할 수 있도록 꺼냅니다.
+// HTTP 상태에 맞는 공통 안내를 사용하고, 입력 관련 오류는 서버의 설명을 유지합니다.
 function getServerErrorMessage(error: unknown, fallback: string) {
-  if (axios.isAxiosError(error)) {
-    const responseData: unknown = error.response?.data
-
-    if (
-      typeof responseData === 'object' &&
-      responseData !== null &&
-      'error' in responseData &&
-      typeof responseData.error === 'string'
-    ) {
-      return responseData.error
-    }
-  }
-
-  return fallback
+  return getApiErrorMessage(error, fallback)
 }
 
 // 이메일로 가입 세션을 시작합니다. 이메일을 수정한 경우 새 세션을 발급받는 데도 사용합니다.
@@ -122,7 +109,7 @@ export async function startSignup(email: string): Promise<SignupStartResponse> {
     !('signupSessionId' in data) ||
     typeof data.signupSessionId !== 'string'
   ) {
-    throw new Error('서버 응답에서 가입 세션 ID를 찾지 못했습니다.')
+    throw new Error('가입 정보를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.')
   }
 
   return { signupSessionId: data.signupSessionId }
@@ -155,7 +142,7 @@ export async function updateSignupEmail(
     !('email' in data) ||
     typeof data.email !== 'string'
   ) {
-    throw new Error('서버 응답에서 수정된 이메일 정보를 확인하지 못했습니다.')
+    throw new Error('변경된 이메일을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.')
   }
 
   return { signupSessionId: data.signupSessionId, email: data.email }
@@ -206,11 +193,11 @@ export async function getSignupTerms(): Promise<SignupTermsResponse> {
           typeof term.required === 'boolean',
       )
     ) {
-      throw new Error('서버 약관 응답 형식이 올바르지 않습니다.')
+      throw new Error('약관을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
     }
 
     if (data.terms.length === 0) {
-      throw new Error('현재 가입에 필요한 약관이 없습니다.')
+      throw new Error('약관을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
     }
 
     return { terms: data.terms as SignupTerm[] }
@@ -224,7 +211,7 @@ export async function getSignupTerms(): Promise<SignupTermsResponse> {
       error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT'
         ? '약관 목록 서버가 15초 안에 응답하지 않았습니다. 잠시 후 다시 시도해 주세요.'
         : error.response
-          ? `약관 목록 요청에 실패했습니다. (HTTP ${error.response.status})`
+          ? '약관 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
           : '약관 목록 서버에 연결할 수 없습니다. 네트워크를 확인해 주세요.'
 
     throw new Error(getServerErrorMessage(error, fallbackMessage), {
@@ -238,10 +225,9 @@ export async function sendSignupVerificationCode(
   signupSessionId: string,
 ): Promise<SignupEmailSendResponse> {
   try {
-    const response = await api.post<SignupEmailSendResponse>(
-      '/v1/auth/signup/email/send',
-      { signupSessionId },
-    )
+    const response = await api.post<SignupEmailSendResponse>('/v1/auth/signup/email/send', {
+      signupSessionId,
+    })
     return response.data
   } catch (error) {
     throw new Error(getServerErrorMessage(error, '인증 메일을 보내지 못했습니다.'), {
@@ -256,10 +242,10 @@ export async function verifySignupEmail(
   code: string,
 ): Promise<SignupEmailVerifyResponse> {
   try {
-    const response = await api.post<SignupEmailVerifyResponse>(
-      '/v1/auth/signup/email/verify',
-      { signupSessionId, code },
-    )
+    const response = await api.post<SignupEmailVerifyResponse>('/v1/auth/signup/email/verify', {
+      signupSessionId,
+      code,
+    })
     return response.data
   } catch (error) {
     throw new Error(getServerErrorMessage(error, '인증 코드를 확인하지 못했습니다.'), {

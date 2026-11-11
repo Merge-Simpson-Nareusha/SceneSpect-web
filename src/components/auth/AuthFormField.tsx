@@ -16,10 +16,7 @@ import eyeIcon from '../../assets/icons/form/eye.svg'
 import eyeOffIcon from '../../assets/icons/form/eye-off.svg'
 
 // name, value, onChange, required 등 기본 input 속성도 함께 전달할 수 있습니다.
-type AuthFormFieldProps = Omit<
-  InputHTMLAttributes<HTMLInputElement>,
-  'type' | 'placeholder'
-> & {
+type AuthFormFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'placeholder'> & {
   // 입력창 왼쪽 위에 표시할 제목을 받습니다. 예: "비밀번호"
   label: string
   // 입력값의 종류를 받습니다. password이면 비밀번호 입력창으로 동작합니다.
@@ -48,6 +45,7 @@ type AuthFormFieldProps = Omit<
 }
 
 type VerificationCodeInputProps = {
+  describedBy?: string
   label: string
   value?: string
   length: number
@@ -58,6 +56,7 @@ type VerificationCodeInputProps = {
 }
 
 function VerificationCodeInput({
+  describedBy,
   label,
   value,
   length,
@@ -91,7 +90,9 @@ function VerificationCodeInput({
         window.clearInterval(timerId)
         const expireHandler = onExpiredRef.current
         if (expireHandler) {
-          void Promise.resolve().then(expireHandler).catch(() => undefined)
+          void Promise.resolve()
+            .then(expireHandler)
+            .catch(() => undefined)
         }
       }
     }, 1000)
@@ -153,14 +154,8 @@ function VerificationCodeInput({
 
   return (
     <div className="flex w-full flex-col gap-[clamp(0.375rem,0.56cqw,0.5rem)]">
-      <p className="text-[1.125rem] font-medium text-[#16181D]">
-        {label}
-      </p>
-      <div
-        className="grid w-full grid-cols-6 gap-[0.3125rem]"
-        role="group"
-        aria-label={label}
-      >
+      <p className="text-[1.125rem] font-medium text-[#16181D]">{label}</p>
+      <div className="grid w-full grid-cols-6 gap-[0.3125rem]" role="group" aria-label={label}>
         {digits.map((digit, index) => (
           <input
             key={index}
@@ -174,6 +169,7 @@ function VerificationCodeInput({
             autoComplete={index === 0 ? 'one-time-code' : 'off'}
             aria-label={`${label} ${index + 1}번째 숫자`}
             aria-invalid={isError || undefined}
+            aria-describedby={describedBy}
             value={digit}
             placeholder="-"
             onFocus={(event) => event.currentTarget.select()}
@@ -215,9 +211,7 @@ function AuthFormField({
   const generatedId = useId()
   const inputId = id ?? generatedId
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
-  const [internalValue, setInternalValue] = useState(() =>
-    String(value ?? defaultValue ?? ''),
-  )
+  const [internalValue, setInternalValue] = useState(() => String(value ?? defaultValue ?? ''))
   const canTogglePassword = type === 'password' && showPasswordToggle
   const inputType = canTogglePassword && isPasswordVisible ? 'text' : type
   const passwordValue = String(value ?? internalValue)
@@ -234,6 +228,7 @@ function AuthFormField({
   if (isVerificationCode) {
     return (
       <VerificationCodeInput
+        describedBy={inputProps['aria-describedby']}
         label={label}
         value={value === undefined ? undefined : String(value)}
         length={verificationCodeLength}
@@ -248,40 +243,21 @@ function AuthFormField({
   return (
     <div className="flex w-full flex-col gap-[clamp(0.375rem,0.56cqw,0.5rem)]">
       <div className="flex w-full items-center justify-between gap-4">
-        <label
-          htmlFor={inputId}
-          className="text-[1.125rem] font-medium text-[#16181D]"
-        >
+        <label htmlFor={inputId} className="text-[1.125rem] font-medium text-[#16181D]">
           {label}
         </label>
         {showPasswordRule && type === 'password' && (
           <div className="flex items-center gap-1 text-right text-[clamp(0.75rem,1.11cqw,1rem)] font-normal">
-            <span
-              className={
-                passwordRules.hasMinimumLength
-                  ? 'text-[#16A34A]'
-                  : 'text-[#EF4444]'
-              }
-            >
+            <span className={passwordRules.hasMinimumLength ? 'text-[#16A34A]' : 'text-[#EF4444]'}>
               12자 이상
             </span>
             <span className="text-[#B0B0B0]">·</span>
-            <span
-              className={
-                passwordRules.hasEnglishLetter
-                  ? 'text-[#16A34A]'
-                  : 'text-[#EF4444]'
-              }
-            >
+            <span className={passwordRules.hasEnglishLetter ? 'text-[#16A34A]' : 'text-[#EF4444]'}>
               영문
             </span>
             <span className="text-[#B0B0B0]">·</span>
             <span
-              className={
-                passwordRules.hasSpecialCharacter
-                  ? 'text-[#16A34A]'
-                  : 'text-[#EF4444]'
-              }
+              className={passwordRules.hasSpecialCharacter ? 'text-[#16A34A]' : 'text-[#EF4444]'}
             >
               특수문자 포함
             </span>

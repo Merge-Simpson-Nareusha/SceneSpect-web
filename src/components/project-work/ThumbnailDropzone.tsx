@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from 'react'
 import uploadIcon from '../../assets/icons/project-work/upload.svg'
 import { commonStyles } from '../common/styles'
+import InlineFeedback from '../feedback/InlineFeedback'
 
 export type ThumbnailDropzoneProps = {
   onFileSelect: (file: File) => void
@@ -86,11 +87,7 @@ export default function ThumbnailDropzone({
           파일 선택
         </button>
       </div>
-      {error && (
-        <p id={errorId} role="alert" className="text-[12px] text-[#e64c50]">
-          {error}
-        </p>
-      )}
+      <InlineFeedback id={errorId} message={error} variant="inline" />
     </div>
   )
 }

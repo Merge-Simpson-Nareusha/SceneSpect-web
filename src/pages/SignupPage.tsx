@@ -26,14 +26,12 @@ import TermsAgreement from '../components/auth/TermsAgreement'
 import completionIcon from '../assets/icons/signup/signup-complete.svg'
 import scenespectLogoFull from '../assets/logos/scenespect-logo-full.svg'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { useNavigate } from 'react-router'
 import type { AuthUser } from '../services/auth'
-import { getApiErrorMessage } from '../services/api'
-import {
-  createTeam as createTeamRequest,
-  getTeams,
-} from '../services/teams'
+import { getApiErrorMessage, getApiErrorStatus } from '../services/api'
+import InlineFeedback from '../components/feedback/InlineFeedback'
+import { createTeam as createTeamRequest, getTeams } from '../services/teams'
 
 type SignupError = 'invalidCredentials' | 'alreadyRegistered'
 
@@ -42,14 +40,8 @@ type SignupPageProps = {
 }
 
 const errorMessages = {
-  invalidCredentials: {
-    text: '이메일 또는 비밀번호를 확인해 주세요.',
-    textSize: 'text-[clamp(0.75rem,1.11cqw,1rem)]',
-  },
-  alreadyRegistered: {
-    text: '이미 가입한 계정입니다.',
-    textSize: 'text-[clamp(0.75rem,1.11cqw,1rem)]',
-  },
+  invalidCredentials: '이메일 또는 비밀번호를 확인해 주세요.',
+  alreadyRegistered: '이미 가입한 계정입니다.',
 } as const
 
 const VERIFICATION_CODE_EXPIRES_IN = 300
@@ -57,6 +49,7 @@ const VERIFICATION_CODE_EXPIRES_IN = 300
 const SignupPage = ({ error = null }: SignupPageProps) => {
   const navigate = useNavigate()
   const selectedError = error ? errorMessages[error] : null
+  const requestErrorId = useId()
   const [currentStep, setCurrentStep] = useState(1)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -69,6 +62,7 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
   // 현재 세션이 어떤 이메일로 만들어졌는지 기억해 수정 여부를 비교합니다.
   const [signupSessionEmail, setSignupSessionEmail] = useState('')
   const [requestError, setRequestError] = useState('')
+  const [isStartingSignup, setIsStartingSignup] = useState(false)
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false)
   const [isSubmittingVerification, setIsSubmittingVerification] = useState(false)
   const [isSendingVerification, setIsSendingVerification] = useState(false)
@@ -77,9 +71,7 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
   const [isPreparingTeam, setIsPreparingTeam] = useState(false)
   const [teamSetupError, setTeamSetupError] = useState('')
   const [isEmailVerified, setIsEmailVerified] = useState(false)
-  const [verificationExpiresIn, setVerificationExpiresIn] = useState(
-    VERIFICATION_CODE_EXPIRES_IN,
-  )
+  const [verificationExpiresIn, setVerificationExpiresIn] = useState(VERIFICATION_CODE_EXPIRES_IN)
   const [resendCountdown, setResendCountdown] = useState(0)
   const [signupTerms, setSignupTerms] = useState<SignupTerm[]>([])
   const [agreements, setAgreements] = useState<Record<string, boolean>>({})
@@ -108,9 +100,10 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
   }, [resendCountdown])
 
   const handleNext = async () => {
-    if (!isEmailValid) return
+    if (!isEmailValid || isStartingSignup) return
 
     setRequestError('')
+    setIsStartingSignup(true)
 
     try {
       const normalizedEmail = email.trim()
@@ -119,9 +112,9 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
       setSignupSessionEmail(normalizedEmail)
       setCurrentStep(2)
     } catch (error) {
-      setRequestError(
-        error instanceof Error ? error.message : '회원가입을 시작하지 못했습니다.',
-      )
+      setRequestError(getApiErrorMessage(error, '회원가입을 시작하지 못했습니다.'))
+    } finally {
+      setIsStartingSignup(false)
     }
   }
 
@@ -175,17 +168,13 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
         setResendCountdown(result.resendAfter)
         setVerificationTimerKey((key) => key + 1)
       } catch (error) {
-        setRequestError(
-          error instanceof Error ? error.message : '인증 메일을 보내지 못했습니다.',
-        )
+        setRequestError(getApiErrorMessage(error, '인증 메일을 보내지 못했습니다.'))
       } finally {
         setIsSendingVerification(false)
       }
     } catch (error) {
       setRequestError(
-        error instanceof Error
-          ? error.message
-          : '비밀번호를 저장하지 못했습니다. 다시 시도해 주세요.',
+        getApiErrorMessage(error, '비밀번호를 저장하지 못했습니다. 다시 시도해 주세요.'),
       )
     } finally {
       setIsSubmittingPassword(false)
@@ -204,7 +193,8 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
         try {
           result = await verifySignupEmail(signupSessionId, verificationCode)
         } catch (error) {
-          setIsVerificationCodeError(true)
+          const status = getApiErrorStatus(error)
+          setIsVerificationCodeError(status === 400 || status === 422)
           throw error
         }
 
@@ -222,9 +212,7 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
       setAgreements(Object.fromEntries(result.terms.map((term) => [term.id, false])))
       setCurrentStep(4)
     } catch (error) {
-      setRequestError(
-        error instanceof Error ? error.message : '인증을 완료하지 못했습니다. 다시 시도해 주세요.',
-      )
+      setRequestError(getApiErrorMessage(error, '인증을 완료하지 못했습니다. 다시 시도해 주세요.'))
     } finally {
       setIsSubmittingVerification(false)
     }
@@ -250,9 +238,7 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
       setVerificationCode('')
       setIsVerificationCodeError(false)
     } catch (error) {
-      setRequestError(
-        error instanceof Error ? error.message : '인증 메일을 다시 보내지 못했습니다.',
-      )
+      setRequestError(getApiErrorMessage(error, '인증 메일을 다시 보내지 못했습니다.'))
     } finally {
       setIsSendingVerification(false)
     }
@@ -284,7 +270,7 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
       setCurrentStep(5)
     } catch (error) {
       setRequestError(
-        error instanceof Error ? error.message : '회원가입을 완료하지 못했습니다. 다시 시도해 주세요.',
+        getApiErrorMessage(error, '회원가입을 완료하지 못했습니다. 다시 시도해 주세요.'),
       )
     } finally {
       setIsSubmittingTerms(false)
@@ -331,7 +317,7 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
   }
 
   return (
-    <div className="@container mx-auto flex h-svh w-full max-w-[2560px] max-md:h-auto max-md:min-h-svh max-md:max-w-none">
+    <main className="@container mx-auto flex h-svh w-full max-w-[2560px] max-md:h-auto max-md:min-h-svh max-md:max-w-none">
       <div className="flex h-svh w-full gap-[2.78cqw] px-[2.78cqw] py-[4.44svh] max-md:h-auto max-md:min-h-svh max-md:flex-col max-md:gap-0 max-md:px-5 max-md:py-6">
         <div className="flex w-[45%] shrink-0 items-center justify-center max-md:hidden">
           <img src={authImage} alt="" className="h-full w-full object-contain" />
@@ -339,258 +325,262 @@ const SignupPage = ({ error = null }: SignupPageProps) => {
         <div
           className={`flex min-h-0 min-w-0 flex-1 flex-col ${currentStep === 5 ? 'gap-[clamp(4rem,8cqw,7rem)]' : 'gap-[1.875rem]'} px-[9.72cqw] pb-[8.89svh] max-md:w-full max-md:gap-10 max-md:px-0 max-md:pb-8`}
         >
-        <AuthProgress
-          currentStep={currentStep}
-          onStepClick={(step) => setCurrentStep((current) => (step < current ? step : current))}
-        />
-        <div
-          className={`flex min-w-0 flex-1 flex-col gap-[2.5rem] ${currentStep === 5 ? 'max-md:gap-0' : 'max-md:flex-initial max-md:gap-10'}`}
-        >
-          {currentStep !== 5 && <SignupStepHeader currentStep={currentStep} />}
-          {currentStep === 1 && (
-            <>
-              <div className="flex flex-col gap-[1.25rem] max-md:gap-7">
-                <AuthFormField
-                  name="email"
-                  type="email"
-                  label="이메일"
-                  placeholder="example@email.com"
-                  value={email}
-                  onChange={(event) => setEmail(event.currentTarget.value)}
-                />
-                <div className="flex flex-col gap-[0.625rem] max-md:gap-4">
-                  <div className="min-h-[1.25em] text-[clamp(0.75rem,1.11cqw,1rem)] leading-tight">
-                    <p
-                      className={`text-[#ef4444] ${selectedError || requestError ? `visible ${selectedError?.textSize ?? 'text-[clamp(0.75rem,1.11cqw,1rem)]'}` : 'invisible'}`}
-                    >
-                      {selectedError?.text ?? (requestError || '\u00a0')}
-                    </p>
-                  </div>
-                  <Button name="default" onClick={handleNext}>
-                    계속하기
-                  </Button>
-                </div>
-                <FormDivider />
-                <div className="grid grid-cols-2 gap-[clamp(0.5rem,0.69cqw,0.625rem)] max-md:gap-3">
-                  <SocialLoginButton name={'google'} />
-                  <SocialLoginButton name={'apple'} />
-                  <SocialLoginButton name={'kakao'} />
-                  <SocialLoginButton name={'x'} />
-                </div>
-              </div>
-              <AuthActionText message="이미 계정이 있으신가요?" linkText="로그인" href="/login" />
-            </>
-          )}
-
-          {currentStep === 2 && (
-            <div className="flex min-h-0 flex-1 flex-col justify-between gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:flex-initial max-md:justify-start max-md:gap-10">
-              <div className="flex flex-col gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:gap-8">
-                <EmailEditField
-                  value={email}
-                  onChange={(value) => {
-                    setEmail(value)
-                    setRequestError('')
-                  }}
-                  isEditing={isEmailEditing}
-                  onEdit={() => setIsEmailEditing(true)}
-                  onDone={() => setIsEmailEditing(false)}
-                />
-
-                <div className="flex flex-col gap-[clamp(1rem,1.67cqw,1.5rem)]">
+          <AuthProgress
+            currentStep={currentStep}
+            onStepClick={(step) => setCurrentStep((current) => (step < current ? step : current))}
+          />
+          <div
+            className={`flex min-w-0 flex-1 flex-col gap-[2.5rem] ${currentStep === 5 ? 'max-md:gap-0' : 'max-md:flex-initial max-md:gap-10'}`}
+          >
+            {currentStep !== 5 && <SignupStepHeader currentStep={currentStep} />}
+            {currentStep === 1 && (
+              <>
+                <div className="flex flex-col gap-[1.25rem] max-md:gap-7">
                   <AuthFormField
-                    name="password"
-                    label="비밀번호"
-                    type="password"
-                    placeholder="비밀번호를 입력해주세요"
-                    showPasswordRule
-                    showPasswordToggle
-                    value={password}
-                    onChange={(event) => setPassword(event.currentTarget.value)}
+                    name="email"
+                    type="email"
+                    label="이메일"
+                    placeholder="example@email.com"
+                    aria-describedby={selectedError || requestError ? requestErrorId : undefined}
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.currentTarget.value)
+                      setRequestError('')
+                    }}
                   />
-                  <AuthFormField
-                    name="passwordConfirm"
-                    label="비밀번호 확인"
-                    type="password"
-                    placeholder="비밀번호를 다시 입력해주세요"
-                    showPasswordToggle
-                    value={passwordConfirm}
-                    onChange={(event) => setPasswordConfirm(event.currentTarget.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col items-center">
-                <div className="flex w-full flex-col gap-[0.625rem] max-md:gap-4">
-                  <div className="min-h-[1.25em] text-[clamp(0.75rem,1.11cqw,1rem)] leading-tight">
-                    <p
-                      aria-live="polite"
-                      className={`text-[#ef4444] ${requestError ? 'visible' : 'invisible'}`}
+                  <div className="flex flex-col gap-[0.625rem] max-md:gap-4">
+                    <div className="min-h-[24px]">
+                      <InlineFeedback
+                        id={requestErrorId}
+                        message={selectedError ?? requestError}
+                        variant="inline"
+                      />
+                    </div>
+                    <Button
+                      name="default"
+                      onClick={handleNext}
+                      disabled={!isEmailValid || isStartingSignup}
                     >
-                      {requestError || '\u00a0'}
-                    </p>
+                      {isStartingSignup ? '처리 중…' : '계속하기'}
+                    </Button>
                   </div>
-                  <Button
-                    name={canContinue && !isSubmittingPassword ? 'default' : 'disabled'}
-                    disabled={!canContinue || !signupSessionId || isSubmittingPassword}
-                    onClick={handlePasswordNext}
-                  >
-                    {isSubmittingPassword ? '처리 중...' : '설정하고 계속하기'}
-                  </Button>
+                  <FormDivider />
+                  <div className="grid grid-cols-2 gap-[clamp(0.5rem,0.69cqw,0.625rem)] max-md:gap-3">
+                    <SocialLoginButton name={'google'} />
+                    <SocialLoginButton name={'apple'} />
+                    <SocialLoginButton name={'kakao'} />
+                    <SocialLoginButton name={'x'} />
+                  </div>
                 </div>
-                {/* <AuthActionText
+                <AuthActionText message="이미 계정이 있으신가요?" linkText="로그인" href="/login" />
+              </>
+            )}
+
+            {currentStep === 2 && (
+              <div className="flex min-h-0 flex-1 flex-col justify-between gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:flex-initial max-md:justify-start max-md:gap-10">
+                <div className="flex flex-col gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:gap-8">
+                  <EmailEditField
+                    value={email}
+                    onChange={(value) => {
+                      setEmail(value)
+                      setRequestError('')
+                    }}
+                    isEditing={isEmailEditing}
+                    onEdit={() => setIsEmailEditing(true)}
+                    onDone={() => setIsEmailEditing(false)}
+                  />
+
+                  <div className="flex flex-col gap-[clamp(1rem,1.67cqw,1.5rem)]">
+                    <AuthFormField
+                      name="password"
+                      label="비밀번호"
+                      type="password"
+                      placeholder="비밀번호를 입력해주세요"
+                      showPasswordRule
+                      showPasswordToggle
+                      value={password}
+                      onChange={(event) => setPassword(event.currentTarget.value)}
+                    />
+                    <AuthFormField
+                      name="passwordConfirm"
+                      label="비밀번호 확인"
+                      type="password"
+                      placeholder="비밀번호를 다시 입력해주세요"
+                      showPasswordToggle
+                      value={passwordConfirm}
+                      onChange={(event) => setPasswordConfirm(event.currentTarget.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <div className="flex w-full flex-col gap-[0.625rem] max-md:gap-4">
+                    <div className="min-h-[24px]">
+                      <InlineFeedback id={requestErrorId} message={requestError} variant="inline" />
+                    </div>
+                    <Button
+                      name={canContinue && !isSubmittingPassword ? 'default' : 'disabled'}
+                      disabled={!canContinue || !signupSessionId || isSubmittingPassword}
+                      onClick={handlePasswordNext}
+                    >
+                      {isSubmittingPassword ? '처리 중...' : '설정하고 계속하기'}
+                    </Button>
+                  </div>
+                  {/* <AuthActionText
                   message="인증 메일이 오지 않았나요?"
                   linkText="재전송"
                   variant="regular"
                 /> */}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {currentStep === 3 && (
-            <div className="flex min-h-0 flex-1 flex-col justify-between gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:flex-initial max-md:justify-start max-md:gap-10">
-              <div className="flex flex-col gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:gap-8">
-                <EmailEditField
-                  value={email}
-                  onChange={setEmail}
-                  isEditing={false}
-                  onEdit={() => {
-                    setIsEmailEditing(true)
-                    setCurrentStep(2)
-                  }}
-                  onDone={() => setIsEmailEditing(false)}
-                />
-              </div>
-              <div>
-                <AuthFormField
-                  key={verificationTimerKey}
-                  label="인증 코드"
-                  isVerificationCode
-                  isVerificationCodeError={isVerificationCodeError}
-                  verificationDurationSeconds={verificationExpiresIn}
-                  value={verificationCode}
-                  onVerificationCodeChange={handleVerificationCodeChange}
-                  onVerificationExpired={handleVerificationResend}
-                />
-                <p
-                  aria-live="polite"
-                  className={`min-h-[1.25em] text-[clamp(0.75rem,1.11cqw,1rem)] text-[#EF4444] ${requestError ? 'visible' : 'invisible'}`}
-                >
-                  {requestError || '\u00a0'}
-                </p>
-              </div>
-              <div className="flex flex-col items-center gap-[clamp(1.5rem,3.33cqw,3rem)] max-md:gap-8">
-                <Button
-                  name={verificationCode.length === 6 && !isSubmittingVerification ? 'default' : 'disabled'}
-                  disabled={verificationCode.length !== 6 || isSubmittingVerification}
-                  onClick={handleVerificationNext}
-                >
-                  {isSubmittingVerification
-                    ? isEmailVerified
-                      ? '약관 불러오는 중...'
-                      : '확인 중...'
-                    : '인증하고 계속하기'}
-                </Button>
-                <AuthActionText
-                  message={isSendingVerification ? '인증 메일을 보내고 있어요.' : '인증 메일이 오지 않았나요?'}
-                  linkText={
-                    resendCountdown > 0
-                      ? `재전송 (${resendCountdown}초 후)`
-                      : isSendingVerification
-                        ? '전송 중'
-                        : '재전송'
-                  }
-                  variant="regular"
-                  onClick={handleVerificationResend}
-                  disabled={resendCountdown > 0 || isSendingVerification}
-                />
-              </div>
-            </div>
-          )}
-
-          {currentStep === 4 && (
-            <div className="flex min-h-0 flex-1 flex-col justify-between gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:flex-initial max-md:justify-start max-md:gap-10">
-              <div className="flex flex-col gap-[clamp(1rem,2.22cqw,2rem)] max-md:gap-8">
-                <TermsAgreement
-                  variant="all"
-                  checked={allAgreementsAccepted}
-                  onChange={(checked) =>
-                    setAgreements(Object.fromEntries(signupTerms.map((term) => [term.id, checked])))
-                  }
-                />
-                <div className="border-y border-[#ECECEC] py-[clamp(0.5rem,1.11cqw,1rem)]">
-                  <div className="flex flex-col gap-[1.6875rem]">
-                    {orderedSignupTerms.map((term) => (
-                      <TermsAgreement
-                        key={term.id}
-                        variant="default"
-                        term={term}
-                        checked={Boolean(agreements[term.id])}
-                        onChange={(checked) => handleAgreementChange(term.id, checked)}
-                      />
-                    ))}
+            {currentStep === 3 && (
+              <div className="flex min-h-0 flex-1 flex-col justify-between gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:flex-initial max-md:justify-start max-md:gap-10">
+                <div className="flex flex-col gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:gap-8">
+                  <EmailEditField
+                    value={email}
+                    onChange={setEmail}
+                    isEditing={false}
+                    onEdit={() => {
+                      setIsEmailEditing(true)
+                      setCurrentStep(2)
+                    }}
+                    onDone={() => setIsEmailEditing(false)}
+                  />
+                </div>
+                <div>
+                  <AuthFormField
+                    key={verificationTimerKey}
+                    label="인증 코드"
+                    isVerificationCode
+                    isVerificationCodeError={isVerificationCodeError}
+                    aria-describedby={requestError ? requestErrorId : undefined}
+                    verificationDurationSeconds={verificationExpiresIn}
+                    value={verificationCode}
+                    onVerificationCodeChange={handleVerificationCodeChange}
+                    onVerificationExpired={handleVerificationResend}
+                  />
+                  <div className="mt-[8px] min-h-[24px]">
+                    <InlineFeedback id={requestErrorId} message={requestError} variant="inline" />
                   </div>
                 </div>
-              </div>
-              <div className="flex flex-col items-center gap-[clamp(0.625rem,1.11cqw,1rem)]">
-                <p
-                  aria-live="polite"
-                  className={`min-h-[1.25em] text-center text-[clamp(0.75rem,1.11cqw,1rem)] text-[#EF4444] ${requestError ? 'visible' : 'invisible'}`}
-                >
-                  {requestError || '\u00a0'}
-                </p>
-                <Button
-                  name={requiredAgreementsAccepted && !isSubmittingTerms ? 'default' : 'disabled'}
-                  disabled={!requiredAgreementsAccepted || isSubmittingTerms}
-                  onClick={handleCompleteSignup}
-                >
-                  {isSubmittingTerms ? '가입 중...' : '동의하고 계속하기'}
-                </Button>
-                <p className="text-center text-[clamp(0.75rem,1.11cqw,1rem)] text-[#B0B0B0]">
-                  필수 약관에 동의하면 계속 할 수 있어요
-                </p>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 5 && (
-            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-[clamp(2rem,5cqw,4rem)] max-md:flex-1 max-md:justify-center max-md:gap-10 max-md:py-8">
-              <img
-                src={completionIcon}
-                alt="가입 완료"
-                className="signup-complete-icon h-[clamp(3rem,6.67cqw,6rem)] w-auto object-contain"
-              />
-              <div className="w-full">
-                <div className="flex items-center gap-[clamp(0.25rem,0.56cqw,0.5rem)]">
-                  <img
-                    src={scenespectLogoFull}
-                    alt="SceneSpect"
-                    className="h-[clamp(2rem,4.5cqw,4rem)] w-auto object-contain"
+                <div className="flex flex-col items-center gap-[clamp(1.5rem,3.33cqw,3rem)] max-md:gap-8">
+                  <Button
+                    name={
+                      verificationCode.length === 6 && !isSubmittingVerification
+                        ? 'default'
+                        : 'disabled'
+                    }
+                    disabled={verificationCode.length !== 6 || isSubmittingVerification}
+                    onClick={handleVerificationNext}
+                  >
+                    {isSubmittingVerification
+                      ? isEmailVerified
+                        ? '약관 불러오는 중...'
+                        : '확인 중...'
+                      : '인증하고 계속하기'}
+                  </Button>
+                  <AuthActionText
+                    message={
+                      isSendingVerification
+                        ? '인증 메일을 보내고 있어요.'
+                        : '인증 메일이 오지 않았나요?'
+                    }
+                    linkText={
+                      resendCountdown > 0
+                        ? `재전송 (${resendCountdown}초 후)`
+                        : isSendingVerification
+                          ? '전송 중'
+                          : '재전송'
+                    }
+                    variant="regular"
+                    onClick={handleVerificationResend}
+                    disabled={resendCountdown > 0 || isSendingVerification}
                   />
-                  <span className="whitespace-nowrap text-[clamp(1.5rem,3.47cqw,3.125rem)] font-semibold text-[#16181D]">
-                    에
-                  </span>
                 </div>
-                <h1 className="whitespace-nowrap text-[clamp(1.5rem,3.47cqw,3.125rem)] font-semibold tracking-[-0.04em] text-[#16181D]">
-                  오신 것을 환영해요
-                </h1>
-                <p className="mt-[clamp(0.5rem,1.11cqw,1rem)] text-[clamp(0.75rem,1.11cqw,1rem)] text-[#B0B0B0]">
-                  이제 영상 분석을 시작해보세요.
-                </p>
               </div>
-              {teamSetupError && (
-                <p role="alert" className="w-full text-center text-[14px] text-[#dc2626]">
-                  {teamSetupError}
-                </p>
-              )}
-              <Button disabled={!completedUser || isPreparingTeam} onClick={handleOpenTeams}>
-                {isPreparingTeam ? '팀 준비 중...' : '메인으로 가기'}
-              </Button>
-            </div>
-          )}
-        </div>
+            )}
+
+            {currentStep === 4 && (
+              <div className="flex min-h-0 flex-1 flex-col justify-between gap-[clamp(1.5rem,2.78cqw,2.5rem)] max-md:flex-initial max-md:justify-start max-md:gap-10">
+                <div className="flex flex-col gap-[clamp(1rem,2.22cqw,2rem)] max-md:gap-8">
+                  <TermsAgreement
+                    variant="all"
+                    checked={allAgreementsAccepted}
+                    onChange={(checked) =>
+                      setAgreements(
+                        Object.fromEntries(signupTerms.map((term) => [term.id, checked])),
+                      )
+                    }
+                  />
+                  <div className="border-y border-[#ECECEC] py-[clamp(0.5rem,1.11cqw,1rem)]">
+                    <div className="flex flex-col gap-[1.6875rem]">
+                      {orderedSignupTerms.map((term) => (
+                        <TermsAgreement
+                          key={term.id}
+                          variant="default"
+                          term={term}
+                          checked={Boolean(agreements[term.id])}
+                          onChange={(checked) => handleAgreementChange(term.id, checked)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center gap-[clamp(0.625rem,1.11cqw,1rem)]">
+                  <div className="min-h-[24px] w-full">
+                    <InlineFeedback id={requestErrorId} message={requestError} variant="inline" />
+                  </div>
+                  <Button
+                    name={requiredAgreementsAccepted && !isSubmittingTerms ? 'default' : 'disabled'}
+                    disabled={!requiredAgreementsAccepted || isSubmittingTerms}
+                    onClick={handleCompleteSignup}
+                  >
+                    {isSubmittingTerms ? '가입 중...' : '동의하고 계속하기'}
+                  </Button>
+                  <p className="text-center text-[clamp(0.75rem,1.11cqw,1rem)] text-[#B0B0B0]">
+                    필수 약관에 동의하면 계속 할 수 있어요
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 5 && (
+              <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-[clamp(2rem,5cqw,4rem)] max-md:flex-1 max-md:justify-center max-md:gap-10 max-md:py-8">
+                <img
+                  src={completionIcon}
+                  alt="가입 완료"
+                  className="signup-complete-icon h-[clamp(3rem,6.67cqw,6rem)] w-auto object-contain"
+                />
+                <div className="w-full">
+                  <div className="flex items-center gap-[clamp(0.25rem,0.56cqw,0.5rem)]">
+                    <img
+                      src={scenespectLogoFull}
+                      alt="SceneSpect"
+                      className="h-[clamp(2rem,4.5cqw,4rem)] w-auto object-contain"
+                    />
+                    <span className="text-[clamp(1.5rem,3.47cqw,3.125rem)] font-semibold whitespace-nowrap text-[#16181D]">
+                      에
+                    </span>
+                  </div>
+                  <h1 className="text-[clamp(1.5rem,3.47cqw,3.125rem)] font-semibold tracking-[-0.04em] whitespace-nowrap text-[#16181D]">
+                    오신 것을 환영해요
+                  </h1>
+                  <p className="mt-[clamp(0.5rem,1.11cqw,1rem)] text-[clamp(0.75rem,1.11cqw,1rem)] text-[#B0B0B0]">
+                    이제 영상 분석을 시작해보세요.
+                  </p>
+                </div>
+                <InlineFeedback message={teamSetupError} className="w-full" />
+                <Button disabled={!completedUser || isPreparingTeam} onClick={handleOpenTeams}>
+                  {isPreparingTeam ? '팀 준비 중...' : '메인으로 가기'}
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   )
 }
 

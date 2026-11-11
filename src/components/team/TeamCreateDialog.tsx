@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import TeamCreateButton from './TeamCreateButton'
-import { getApiErrorMessage } from '../../services/api'
+import { getApiErrorMessage, getApiErrorStatus } from '../../services/api'
+import InlineFeedback from '../feedback/InlineFeedback'
 
 export type TeamCreateInput = {
   name: string
@@ -69,7 +70,11 @@ export default function TeamCreateDialog({
       reset()
       onClose()
     } catch (error) {
-      setOperationError(getApiErrorMessage(error, '팀을 만들지 못했습니다. 다시 시도해 주세요.'))
+      setOperationError(
+        getApiErrorStatus(error) === 409
+          ? '이미 사용 중인 팀 이름입니다. 다른 이름을 입력해 주세요.'
+          : getApiErrorMessage(error, '팀을 만들지 못했습니다. 다시 시도해 주세요.'),
+      )
     } finally {
       setSubmitting(false)
     }
@@ -88,7 +93,12 @@ export default function TeamCreateDialog({
         reset()
         onClose()
       } catch (error) {
-        setOperationError(getApiErrorMessage(error, '팀 참가 요청을 보내지 못했습니다.'))
+        const status = getApiErrorStatus(error)
+        setOperationError(
+          status === 404 || status === 410
+            ? '초대 코드를 사용할 수 없습니다. 코드를 확인하거나 팀 관리자에게 새 초대를 요청해 주세요.'
+            : getApiErrorMessage(error, '팀 참가 요청을 보내지 못했습니다.'),
+        )
       } finally {
         setSubmitting(false)
       }
@@ -156,14 +166,13 @@ export default function TeamCreateDialog({
             <h2 id={`${id}-title`} className="text-2xl font-semibold">
               새 팀 만들기
             </h2>
-            <p className="mt-2 text-sm text-[#737b88]">
-              새 팀의 기본 정보를 입력해 주세요.
-            </p>
+            <p className="mt-2 text-sm text-[#737b88]">새 팀의 기본 정보를 입력해 주세요.</p>
           </header>
           <label htmlFor={`${id}-name`} className="flex flex-col gap-2 text-sm font-medium">
             팀 이름
             <input
               id={`${id}-name`}
+              aria-describedby={operationError ? `${id}-error` : undefined}
               autoFocus
               required
               maxLength={80}
@@ -191,11 +200,7 @@ export default function TeamCreateDialog({
               className="resize-y rounded-lg border border-[#e3e6eb] p-4 text-base font-normal outline-none focus-visible:border-[#2563eb] focus-visible:ring-2 focus-visible:ring-[#2563eb]/20"
             />
           </label>
-          {operationError && (
-            <p role="alert" className="text-sm text-[#dc2626]">
-              {operationError}
-            </p>
-          )}
+          <InlineFeedback id={`${id}-error`} message={operationError} />
           <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
             <button
               type="button"
@@ -233,6 +238,7 @@ export default function TeamCreateDialog({
             초대 코드
             <input
               id={`${id}-invite-code`}
+              aria-describedby={operationError ? `${id}-error` : undefined}
               autoFocus
               required
               value={inviteCode}
@@ -244,11 +250,7 @@ export default function TeamCreateDialog({
               className="h-12 rounded-lg border border-[#e3e6eb] px-4 text-base font-normal outline-none focus-visible:border-[#2563eb] focus-visible:ring-2 focus-visible:ring-[#2563eb]/20"
             />
           </label>
-          {operationError && (
-            <p role="alert" className="text-sm text-[#dc2626]">
-              {operationError}
-            </p>
-          )}
+          <InlineFeedback id={`${id}-error`} message={operationError} />
           <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
             <button
               type="button"
