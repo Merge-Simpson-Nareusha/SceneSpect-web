@@ -29,6 +29,7 @@ type LoginResponse = {
 }
 type CurrentUserResponse = { user: AuthUser }
 type PasswordResetRequestResponse = { message: string }
+type PasswordResetResponse = { reset: boolean }
 
 const USER_CACHE_KEY = 'scenespect.user'
 
@@ -316,6 +317,18 @@ export async function requestPasswordReset(email: string) {
     method: 'POST',
     authenticated: false,
     body: { email },
+  })
+}
+
+export async function resetPassword(
+  token: string,
+  password: string,
+  passwordConfirmation: string,
+) {
+  return apiRequest<PasswordResetResponse>('/api/v1/auth/password/reset', {
+    method: 'POST',
+    authenticated: false,
+    body: { token, password, passwordConfirmation },
   })
 }
 
