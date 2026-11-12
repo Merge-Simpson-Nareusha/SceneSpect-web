@@ -9,20 +9,18 @@ import { resetPassword } from '../services/auth'
 
 function PasswordChangePage() {
   const token = new URLSearchParams(window.location.search).get('token')?.trim() ?? ''
+  const tokenError = token
+    ? ''
+    : '재설정 링크가 올바르지 않거나 만료되었습니다. 이메일에서 다시 열어 주세요.'
   const [password, setPassword] = useState('')
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
-  const [error, setError] = useState(
-    token ? '' : '재설정 링크가 올바르지 않거나 만료되었습니다. 이메일에서 다시 열어 주세요.',
-  )
+  const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   const handleReset = async () => {
     if (submitting) return
-    if (!token) {
-      setError('재설정 링크가 올바르지 않거나 만료되었습니다. 이메일에서 다시 열어 주세요.')
-      return
-    }
+    if (!token) return
     if (password.length < 12 || password.length > 72) {
       setError('비밀번호는 12자 이상 72자 이하로 입력해 주세요.')
       return
@@ -121,6 +119,11 @@ function PasswordChangePage() {
                 }}
               />
 
+              {tokenError && (
+                <p role="alert" className="text-sm text-[#EF4444]">
+                  {tokenError}
+                </p>
+              )}
               <p
                 aria-live="polite"
                 aria-atomic="true"
