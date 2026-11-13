@@ -22,6 +22,7 @@ export default function ProjectWorkPreviewPage() {
           <a href="?preview=common">00 공통 보기</a>
           <a href="?preview=project">04 프로젝트 보기</a>
           <a href="?preview=settings">05 개인 설정 보기</a>
+          <a href="?preview=project-settings">07 프로젝트 설정 보기</a>
         </nav>
         <p role="status" className="min-h-[20px] text-[14px] text-[#838a94]">
           {message}

@@ -43,6 +43,22 @@ function LoginPage() {
     }
   }
 
+  const handlePasswordResetRequest = () => {
+    const passwordResetUrl = new URL('/password/forgot', window.location.origin)
+    const popup = window.open(
+      passwordResetUrl.toString(),
+      'scenespect-password-reset',
+      'popup,width=480,height=600,resizable=yes,scrollbars=yes',
+    )
+
+    if (popup) {
+      popup.focus()
+      setLoginError('')
+    } else {
+      setLoginError('새 창이 열리지 않았어요. 브라우저에서 팝업을 허용해 주세요.')
+    }
+  }
+
   return (
     <main className="login-page @container mx-auto flex h-svh w-full max-w-[2560px]">
       <div className="login-page-layout flex h-full w-full gap-[2.78cqw] px-[2.78cqw] py-[4.44svh] max-md:flex-col max-md:gap-0 max-md:px-5 max-md:py-6">
@@ -75,7 +91,6 @@ function LoginPage() {
                 name="email"
                 type="email"
                 label="이메일"
-                labelActionText="이메일 찾기"
                 placeholder="example@email.com"
                 required
                 aria-describedby={loginError ? errorId : undefined}
@@ -90,6 +105,7 @@ function LoginPage() {
                 name="password"
                 label="비밀번호"
                 labelActionText="비밀번호 찾기"
+                onLabelActionClick={handlePasswordResetRequest}
                 type="password"
                 placeholder="비밀번호를 입력해주세요"
                 required
